@@ -1,0 +1,27 @@
+# Dune Admin Manager - Configuration Example (root config)
+# Copy this file to config.yaml and adjust to your setup.
+#
+# NOTE: The web backend loads config/config.yaml (see config/config.example.yaml).
+# This root config.yaml is used by the setup wizard and some API endpoints.
+
+provider: hyperv
+listen_addr: 127.0.0.1          # 127.0.0.1 = local only, 0.0.0.0 = LAN
+listen_port: 8080
+
+server_name: Dune Server
+server_token: ""                # Dune Awakening server token (account.duneawakening.com)
+
+hyperv:
+  vm_name: dune-awakening
+  server_path: "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Dune Awakening Self-Hosted Server"
+  memory_gb: 20
+
+ssh:
+  host: 127.0.0.1               # IP of the VM running the game server
+  port: 22
+  user: dune
+  password: ""                  # leave empty to use an SSH key
+  key_path: ""
+
+logging:
+  level: INFO

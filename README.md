@@ -76,6 +76,13 @@ Required packages: `fastapi`, `uvicorn`, `websockets`, `asyncssh`, `paramiko`,
 
 ### 3. Configure / Skonfiguruj
 
+Ready-made sanitized templates are included:
+- `config/config.example.yaml` — full template for the web backend
+- `config.yaml.example` — template for the root config (setup wizard)
+
+Copy the one you need to `config.yaml` and adjust it. The backend also
+auto-creates `config/config.yaml` with safe defaults on first run.
+
 Edit `config/config.yaml` (or `config.yaml` in the root):
 
 ```yaml
