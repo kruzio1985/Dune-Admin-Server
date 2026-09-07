@@ -57,6 +57,27 @@ Kliknij obraz, aby powiekszyc / Click an image to enlarge.
 - At least **20 GB RAM**, **40 GB** free disk space
 - Server token from https://account.duneawakening.com/ → Self-Hosted Servers
 
+## ⚡ Quick start / Szybki start
+
+1. **Wymagania / Requirements** — Python 3.11+, Hyper-V enabled, Steam + `Dune Awakening Self-Hosted Server`.
+2. **Zainstaluj zależności / Install dependencies:**
+
+   ```powershell
+   cd "C:\path\to\Dune Admin Server"
+   pip install -r requirements.txt
+   ```
+
+3. **Ustaw swoje dane / Set your values** in `config.yaml` (root) and `config/config.yaml`:
+   `ssh.host`, `ssh.password`, `hyperv.server_path` — full example below / pełny przykład niżej.
+4. **Uruchom panel / Run the panel:**
+
+   ```powershell
+   python -m backend.main
+   ```
+
+   or double-click / lub dwuklik `START.bat` / `URUCHOM.bat`.
+5. **Otwórz / Open** http://127.0.0.1:8080 and finish the **Setup Wizard** / i dokończ **Kreator konfiguracji**.
+
 ---
 
 ## 🚀 Installation / Instalacja
@@ -76,12 +97,16 @@ Required packages: `fastapi`, `uvicorn`, `websockets`, `asyncssh`, `paramiko`,
 
 ### 3. Configure / Skonfiguruj
 
-Ready-made sanitized templates are included:
-- `config/config.example.yaml` — full template for the web backend
-- `config.yaml.example` — template for the root config (setup wizard)
+Config files are included directly in this repo:
+- `config/config.yaml` — web backend config (SSH + database)
+- `config.yaml` — root config used by the setup wizard
 
-Copy the one you need to `config.yaml` and adjust it. The backend also
-auto-creates `config/config.yaml` with safe defaults on first run.
+They are pre-filled and safe to use — just change the values for your machine.
+Templates are also included if you want to start from scratch:
+- `config/config.example.yaml`
+- `config.yaml.example`
+
+The backend also auto-creates `config/config.yaml` with safe defaults on first run.
 
 Edit `config/config.yaml` (or `config.yaml` in the root):
 
