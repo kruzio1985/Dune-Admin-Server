@@ -29,6 +29,26 @@ Key features:
 
 ---
 
+---
+
+## Screenshots / Zrzuty ekranu
+
+<div align="center">
+  <a href="images/dune1.png"><img src="images/dune1.png" alt="Dune Admin Manager - screenshot 1" width="30%" /></a>
+  <a href="images/dune2.png"><img src="images/dune2.png" alt="Dune Admin Manager - screenshot 2" width="30%" /></a>
+  <a href="images/dune3.png"><img src="images/dune3.png" alt="Dune Admin Manager - screenshot 3" width="30%" /></a>
+  <a href="images/dune4.png"><img src="images/dune4.png" alt="Dune Admin Manager - screenshot 4" width="30%" /></a>
+  <a href="images/dune5.png"><img src="images/dune5.png" alt="Dune Admin Manager - screenshot 5" width="30%" /></a>
+  <a href="images/dune6.png"><img src="images/dune6.png" alt="Dune Admin Manager - screenshot 6" width="30%" /></a>
+  <a href="images/dune7.png"><img src="images/dune7.png" alt="Dune Admin Manager - screenshot 7" width="30%" /></a>
+  <a href="images/dune8.png"><img src="images/dune8.png" alt="Dune Admin Manager - screenshot 8" width="30%" /></a>
+  <a href="images/dune9.png"><img src="images/dune9.png" alt="Dune Admin Manager - screenshot 9" width="30%" /></a>
+  <a href="images/dune10.png"><img src="images/dune10.png" alt="Dune Admin Manager - screenshot 10" width="30%" /></a>
+  <a href="images/dune11.png"><img src="images/dune11.png" alt="Dune Admin Manager - screenshot 11" width="30%" /></a>
+</div>
+
+Kliknij obraz, aby powiekszyc / Click an image to enlarge.
+
 ## 📋 Requirements / Wymagania
 
 - **Windows 10/11 Pro** with **Hyper-V** enabled
