@@ -1,0 +1,11 @@
+{
+  "_description": "Cosmetic catalog - dyes, MTX skins, armor/weapon/vehicle swatches (621+ items)",
+  "cosmetics": [
+    { "id": "dye_sandstorm_orange", "name": "Sandstorm Orange Dye", "category": "dye", "type": "color" },
+    { "id": "dye_spice_blue", "name": "Spice Blue Dye", "category": "dye", "type": "color" },
+    { "id": "dye_worm_gold", "name": "Sandworm Gold Dye", "category": "dye", "type": "color" },
+    { "id": "skin_atreides_elite", "name": "Atreides Elite Armor Skin", "category": "skin", "type": "armor" },
+    { "id": "skin_harkonnen_heavy", "name": "Harkonnen Heavy Armor Skin", "category": "skin", "type": "armor" },
+    { "id": "swatch_ornithopter_black", "name": "Ornithopter Black Swatch", "category": "swatch", "type": "vehicle" }
+  ]
+}

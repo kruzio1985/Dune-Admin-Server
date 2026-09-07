@@ -1,0 +1,639 @@
+/**
+ * Gameplay Tab - Intel, Teleport, Skills, Landsraad, Chat
+ */
+const GameplayTab = {
+    fls_id: '',
+
+    async render() {
+        document.getElementById('content').innerHTML = `
+            <h2>🎮 Gameplay Admin</h2>
+            <div class="grid-2 mt-3">
+                <div class="card">
+                    <div class="card-header">💰 Currency</div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label class="form-label">👤 Player</label>
+                            <select class="form-select" id="gpPlayerSelect" onchange="GameplayTab.selectPlayer()" style="width:100%">
+                                <option value="">-- Select player --</option>
+                            </select>
+                            <label class="form-label mt-2">FLS ID</label>
+                            <input type="text" class="form-input" id="gpFls" value="${this.fls_id}" placeholder="FC4D3B70DB35663">
+                        </div>
+                        <div class="flex gap-2 mt-2">
+                            <button class="btn btn-success" onclick="GameplayTab.giveSolaris(999999999)">+1B Solaris</button>
+                            <button class="btn btn-success" onclick="GameplayTab.giveSolaris(100000000)">+100M Solaris</button>
+                            <button class="btn btn-primary" onclick="GameplayTab.giveScrip(999999999)">+1B Scrip</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">🧠 Intel & XP</div>
+                    <div class="card-body">
+                        <div class="flex gap-2">
+                            <button class="btn btn-warning" onclick="GameplayTab.awardIntel(50000)">+50k Intel</button>
+                            <button class="btn btn-warning" onclick="GameplayTab.awardXP('General',100000)">+100k XP</button>
+                            <button class="btn btn-warning" onclick="GameplayTab.awardXP('Combat',50000)">+50k Combat</button>
+                            <button class="btn btn-warning" onclick="GameplayTab.awardXP('Science',50000)">+50k Science</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="grid-2 mt-3">
+                <div class="card">
+                    <div class="card-header">⚔️ Classes & Skills</div>
+                    <div class="card-body">
+                        <div class="flex gap-2 flex-wrap">
+                            <button class="btn btn-danger" onclick="GameplayTab.unlockAllClasses()">🔓 Unlock All Classes</button>
+                            <button class="btn btn-danger" onclick="GameplayTab.maxAllSkills()">⬆ Max All Skills</button>
+                            <button class="btn btn-primary" onclick="GameplayTab.setSkillPoints(500)">⭐ 500 Skill Pts</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">🗺️ Teleport</div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label class="form-label">Target FLS ID</label>
+                            <input type="text" class="form-input" id="gpTarget" placeholder="Target player FLS ID">
+                        </div>
+                        <div class="flex gap-2 mt-2">
+                            <button class="btn btn-primary" onclick="GameplayTab.teleportToPlayer()">🎯 Teleport to Player</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card mt-3">
+                <div class="card-header">📢 Server Broadcast</div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label class="form-label">Title</label>
+                        <input type="text" class="form-input" id="gpTitle" value="Server Message">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Message</label>
+                        <input type="text" class="form-input" id="gpMsg" value="Hello players!">
+                    </div>
+                    <button class="btn btn-warning mt-2" onclick="GameplayTab.broadcast()">📢 Send Broadcast</button>
+                </div>
+            </div>
+            <div class="card mt-3">
+                <div class="card-header">🏛️ Landsraad</div>
+                <div class="card-body" id="landsraadData">Loading...</div>
+            </div>
+            <div class="grid-2 mt-3">
+                <div class="card">
+                    <div class="card-header">� Spawn Vehicle Parts (T6)</div>
+                    <div class="card-body">
+                        <select class="form-select mb-2" id="gpVehicle" style="width:100%">
+                            <option value="sandbike">🏍️ Sandbike T6</option>
+                            <option value="buggy">🚙 Buggy T6</option>
+                            <option value="scout">🚁 Scout Ornithopter T6</option>
+                            <option value="assault">🛩️ Assault Ornithopter T6</option>
+                            <option value="carrier">🛫 Carryall T6</option>
+                            <option value="treadwheel">🛞 Treadwheel T6</option>
+                        </select>
+                        <button class="btn btn-primary w-full" onclick="GameplayTab.spawnVehicleParts()">🔧 Spawn All Parts</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">📦 Give Items / Resources</div>
+                    <div class="card-body">
+                        <select class="form-select mb-2" id="gpItem" style="width:100%">
+                            <optgroup label="🪨 Raw Resources">
+                                <option value="Stone">Granite Stone</option>
+                                <option value="Basalt">Basalt Stone</option>
+                                <option value="Plastone">Plastone</option>
+                                <option value="PlantFiber">Plant Fiber</option>
+                                <option value="ScrapMetal">Salvaged Metal</option>
+                                <option value="AzuriteOre">Copper Ore</option>
+                                <option value="MagnetiteOre">Iron Ore</option>
+                                <option value="DolomiteRock">Carbon Ore</option>
+                                <option value="BauxiteOre">Aluminum Ore</option>
+                                <option value="T6ResourceA">Titanium Ore</option>
+                                <option value="FlourSand">Flour Sand</option>
+                                <option value="SpiceSand">Spice Sand</option>
+                                <option value="SpiceResidue">Spice Residue</option>
+                                <option value="JasmiumCrystal">Jasmium Crystal</option>
+                                <option value="ErythriteCrystal">Erythrite Crystal</option>
+                                <option value="T6ResourceB">Stravidium Mass</option>
+                                <option value="SaguaroResourceRaw">Agave Seeds</option>
+                                <option value="Coal">Coal</option>
+                                <option value="Sulfur">Sulfur</option>
+                            </optgroup>
+                            <optgroup label="🔩 Refined Materials">
+                                <option value="CopperBar">Copper Ingot</option>
+                                <option value="IronBar">Iron Ingot</option>
+                                <option value="SteelBar">Steel Ingot</option>
+                                <option value="AluminiumBar">Aluminum Ingot</option>
+                                <option value="DuraluminumRod">Duraluminum Ingot</option>
+                                <option value="T6RefinedResourceA">Plastanium Ingot</option>
+                                <option value="Silicone">Silicone Block</option>
+                                <option value="CobaltBar">Cobalt Paste</option>
+                                <option value="T6RefinedResourceB">Stravidium Fiber</option>
+                                <option value="T6PlasteelComponent">Plasteel Plate</option>
+                                <option value="T6ArmorPlating">Plasteel Armor Plating</option>
+                                <option value="T6BladePart">Plasteel Blade Parts</option>
+                                <option value="T6GunPart">Plasteel Gun Parts</option>
+                                <option value="GreatHouseComponent1">Plasteel Microflora Fiber</option>
+                            </optgroup>
+                            <optgroup label="🧪 Special Components">
+                                <option value="T1UniqueComponent">Spice-infused Copper Dust</option>
+                                <option value="T2UniqueComponent">Spice-infused Iron Dust</option>
+                                <option value="T3UniqueComponent">Spice-infused Steel Dust</option>
+                                <option value="T4UniqueComponent">Spice-infused Aluminum Dust</option>
+                                <option value="T5UniqueComponent">Spice-infused Duraluminum Dust</option>
+                                <option value="T6UniqueComponent">Spice-infused Plastanium Dust</option>
+                            </optgroup>
+                            <optgroup label="🌶️ Spice & Fuel">
+                                <option value="MelangeSpice">Spice Melange</option>
+                                <option value="Spice">Raw Spice (alternate)</option>
+                                <option value="RefinedSpice">Refined Spice</option>
+                                <option value="SpicedFuelCell">Spice-infused Fuel Cell</option>
+                                <option value="Oil">Fuel Cell</option>
+                                <option value="FuelCanister">Small Vehicle Fuel Cell</option>
+                                <option value="FuelCanister_Medium">Medium Vehicle Fuel Cell</option>
+                                <option value="FuelCanister_Large">Large Vehicle Fuel Cell</option>
+                                <option value="WaterItem">Water</option>
+                            </optgroup>
+                            <optgroup label="🛢️ Lubricants & Filters">
+                                <option value="WindTurbineLubricant1">Low-grade Lubricant</option>
+                                <option value="WindTurbineLubricant2">Industrial-grade Lubricant</option>
+                                <option value="WindTrapFilter1">Makeshift Filter</option>
+                                <option value="WindTrapFilter2">Standard Filter</option>
+                                <option value="WindTrapFilter3">Particulate Filter</option>
+                                <option value="WindTrapFilter4">Advanced Particulate Filter</option>
+                            </optgroup>
+                            <optgroup label="⚙️ Crafting Components">
+                                <option value="T6Machinery">Advanced Machinery</option>
+                                <option value="OldImperialComponent1">Advanced Servoks</option>
+                                <option value="T3MiningGalleryComponent1">Calibrated Servok</option>
+                                <option value="T2MachineComponent">Complex Machinery</option>
+                                <option value="T4HarkSpiceSiloComponent1">Industrial Pump</option>
+                                <option value="T2HeavyComponent">Armor Plating (T2)</option>
+                                <option value="T5FactionBaseComponent1">Military Power Regulator</option>
+                                <option value="T5DeepDesertShieldWallComponent">Thermoelectric Cooler</option>
+                                <option value="OldImperialComponent2">Particle Capacitor</option>
+                                <option value="T6IndustrialPump">Fluid Efficient Industrial Pump</option>
+                                <option value="T6HydraulicPiston">Tri-Forged Hydraulic Piston</option>
+                                <option value="T6PowerRegulator">Overclocked Power Regulator</option>
+                                <option value="T6HoltzmanActuator">Improved Holtzman Actuator</option>
+                                <option value="T6FilteredFabric">Atmospheric Filtered Fabric</option>
+                                <option value="T6BalisticWeave">Ballistic Weave Fabric</option>
+                                <option value="T6CarbidePladeParts">Carbide Blade Parts</option>
+                                <option value="T6DiamodineBladeParts">Diamodine Blade Parts</option>
+                                <option value="T1RusherComponent">Blade Parts (T1)</option>
+                                <option value="T2HeavyComponent">Armor Plating (T2)</option>
+                                <option value="T4MysaTarilComponent2">Carbide Scraps</option>
+                                <option value="T4MysaTarilComponent1">Diamondine Dust</option>
+                                <option value="SandtroutLeathers">Sandtrout Leathers</option>
+                                <option value="IrradiatedCore">Irradiated Core</option>
+                                <option value="IrradiatedSlag">Irradiated Slag</option>
+                                <option value="StillsuitTubing">Stillsuit Tubing</option>
+                                <option value="T4PyonVillageComponent">Insulated Fabric</option>
+                                <option value="OffWorldMedicalSupplies">Off-world Medical Supplies</option>
+                            </optgroup>
+                            <optgroup label="🔫 Ammo & Tools">
+                                <option value="Ammo">Light Ammo</option>
+                                <option value="HeavyAmmo">Heavy Ammo</option>
+                                <option value="MiningTool_2h_Heavy">Heavy Cutteray</option>
+                                <option value="BasicBuildingTool">Building Tool</option>
+                                <option value="RespawnBeacon">Respawn Beacon</option>
+                                <option value="HealthPack_Channeled_3">Health Pack T3</option>
+                            </optgroup>
+                            <optgroup label="🎁 Welcome Pack (Real Names)">
+                                <option value="Literjon">Literjon (Water Container)</option>
+                                <option value="HealthPackT2">Health Pack MK2</option>
+                                <option value="LightAmmo">Light Ammo Bolts</option>
+                                <option value="HarkAr4">Karpov-38 MK2 (Artisan)</option>
+                                <option value="HoltzmanShieldActiveDrain">Holtzman Shield MK2</option>
+                                <option value="PowerPack2">Power Pack MK2 (Battery)</option>
+                                <option value="Combat_Choam_Heavy02_Boots">Kirab Heavy Boots</option>
+                                <option value="Combat_Choam_Heavy02_Bottom">Kirab Heavy Pants</option>
+                                <option value="Combat_Choam_Heavy02_Gloves">Kirab Heavy Gauntlet</option>
+                                <option value="Combat_Choam_Heavy02_Helmet">Kirab Heavy Headwrap</option>
+                                <option value="Combat_Choam_Heavy02_Top">Kirab Heavy Jerkin</option>
+                            </optgroup>
+                            <optgroup label="🔫 Weapons">
+                                <option value="HarkAr2">Karpov 38 (T2)</option>
+                                <option value="HarkAr3">Standard Karpov 38 (T3)</option>
+                                <option value="HarkAr4">Artisan Karpov 38 (T4/MK2)</option>
+                                <option value="HarkAr5">House Karpov 38 (T5/MK3)</option>
+                                <option value="HarkAr6">Adept Karpov 38 (T6)</option>
+                                <option value="MaulaPistol">Maula Pistol</option>
+                            </optgroup>
+                            <optgroup label="🛡️ Armor Sets">
+                                <option value="Combat_Choam_Heavy01_Boots">Duneman Heavy Boots (T1)</option>
+                                <option value="Combat_Choam_Heavy01_Top">Duneman Heavy Top (T1)</option>
+                                <option value="Combat_Choam_Heavy02_Boots">Kirab Heavy Boots (T2)</option>
+                                <option value="Combat_Choam_Heavy02_Bottom">Kirab Heavy Pants (T2)</option>
+                                <option value="Combat_Choam_Heavy02_Gloves">Kirab Heavy Gauntlet (T2)</option>
+                                <option value="Combat_Choam_Heavy02_Helmet">Kirab Heavy Headwrap (T2)</option>
+                                <option value="Combat_Choam_Heavy02_Top">Kirab Heavy Jerkin (T2)</option>
+                                <option value="Combat_Choam_Heavy03_Boots">Slaver Heavy Boots (T3)</option>
+                                <option value="Combat_Choam_Heavy03_Top">Slaver Heavy Top (T3)</option>
+                            </optgroup>
+                            <optgroup label="🛡️ Shields & Utility">
+                                <option value="HoltzmanShieldActiveDrain">Holtzman Shield MK2</option>
+                                <option value="HoltzmanShieldActiveDrain2">Holtzman Shield MK3</option>
+                                <option value="PowerPack">Improvised Power Pack (T1)</option>
+                                <option value="PowerPack2">Power Pack MK2</option>
+                                <option value="PowerPack3">Power Pack MK4</option>
+                            </optgroup>
+                            <optgroup label="🚗 Vehicle Parts">
+                                <option value="SandbikeChassis_6">Sandbike Chassis T6</option>
+                                <option value="SandbikeEngine_Unique_Speed_6">Sandbike Engine T6</option>
+                                <option value="SandbikeGenerator_6">Sandbike Generator T6</option>
+                                <option value="SandbikeHull_6">Sandbike Hull T6</option>
+                                <option value="SandbikeLocomotion_6">Sandbike Locomotion T6</option>
+                                <option value="SandbikeBoost_Unique_LessHeat_6">Sandbike Boost T6</option>
+                                <option value="FuelCanister_Large">Large Fuel Canister</option>
+                            </optgroup>
+                                <option value="WeldingMaterial">Welding Wire</option>
+                                <option value="RepairTool">Welding Torch Mk1</option>
+                                <option value="RepairTool3">Welding Torch Mk3</option>
+                                <option value="RepairTool5">Welding Torch Mk5</option>
+                            </optgroup>
+                        </select>
+                        <div class="flex gap-2">
+                            <input type="number" class="form-input" id="gpQty" value="1000" style="width:100px">
+                            <button class="btn btn-success flex-1" onclick="GameplayTab.giveItemLive()">📦 Give Item</button>
+                            <button class="btn btn-success flex-1" onclick="GameplayTab.giveWelcomePack()">🎁 Welcome</button>
+                            <button class="btn btn-sm" onclick="GameplayTab.giveWelcomePack('t1')">T1</button>
+                            <button class="btn btn-sm" onclick="GameplayTab.giveWelcomePack('t2')">T2</button>
+                            <button class="btn btn-sm" onclick="GameplayTab.giveWelcomePack('t3')">T3</button>
+                        </div>
+                        <div class="flex gap-2 mt-2">
+                            <button class="btn btn-warning btn-sm" onclick="GameplayTab.giveSolaris(10000000)">+10M Solaris</button>
+                            <button class="btn btn-warning btn-sm" onclick="GameplayTab.giveSolaris(100000000)">+100M Solaris</button>
+                            <button class="btn btn-primary btn-sm" onclick="GameplayTab.giveScrip(999999999)">+1B Scrip</button>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="grid-2 mt-3">
+                <div class="card">
+                    <div class="card-header">🔧 Quick Actions</div>
+                    <div class="card-body">
+                        <div class="flex gap-2 flex-wrap">
+                            <button class="btn btn-success" onclick="GameplayTab.grantAllTech()">📘 All Tech Recipes</button>
+                            <button class="btn btn-success" onclick="GameplayTab.completeAllQuests()">🎯 Complete Main Quests</button>
+                            <button class="btn btn-danger" onclick="GameplayTab.playtestSetup()">⚔️ Full Gear Setup</button>
+                            <button class="btn btn-warning" onclick="GameplayTab.maxSpecializations()">⭐ Max Specializations (lvl 100)</button>
+                            <button class="btn btn-info" onclick="GameplayTab.grantAllKeystones()">💎 All Keystones (205)</button>
+                            <button class="btn btn-info" onclick="GameplayTab.maxFactionRep()">📊 Max Faction Rep (Tier 20)</button>
+                        </div>
+                        <div class="flex gap-2 mt-2" style="align-items:center">
+                            <div>
+                                <label class="form-label" style="margin:0;font-size:11px;color:#ffa500">🏆 Frakcja:</label>
+                                <select class="form-select" id="gpFaction" style="width:160px">
+                                    <option value="2" selected>🦅 Harkonnen</option>
+                                    <option value="1">🦁 Atreides</option>
+                                    <option value="4">🐍 Smuggler</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-primary flex-1" onclick="GameplayTab.autoCompleteMissions()">🏆 Auto-Complete Landsraad (25/25)</button>
+                        </div>
+                        <p class="text-muted" style="font-size:10px;margin:4px 0 0 0">Daje 70000 pkt na każdy dom, ustawia progress, wkład własny, siłę głosu. Dekret aktywuje automatycznie ale TY wybierasz na który głosować w grze.</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">🛠️ Progression</div>
+                    <div class="card-body">
+                        <div class="flex gap-2 flex-wrap">
+                            <button class="btn btn-primary" onclick="GameplayTab.fillWater()">💧 Fill Water</button>
+                            <button class="btn btn-primary" onclick="GameplayTab.repairGear()">🔧 Repair All Gear</button>
+                            <button class="btn btn-danger" onclick="GameplayTab.cleanInventory()">🗑️ Clean Inventory</button>
+                            <button class="btn btn-danger" onclick="GameplayTab.resetProgression()">🔄 Reset Progression</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card mt-3">
+                <div class="card-header">⭐ Specializations</div>
+                <div class="card-body">
+                    <div id="specStatus" class="mb-2">Loading...</div>
+                    <div class="flex gap-2 flex-wrap">
+                        <button class="btn btn-warning" onclick="GameplayTab.maxSpecializations()">⬆ Max All (lvl 100)</button>
+                        <button class="btn btn-info" onclick="GameplayTab.grantAllKeystones()">💎 All Keystones (205)</button>
+                        <select class="form-select" id="specTrack" style="width:130px">
+                            <option value="Combat">⚔️ Combat</option>
+                            <option value="Crafting">🔧 Crafting</option>
+                            <option value="Exploration">🗺️ Exploration</option>
+                            <option value="Gathering">🌿 Gathering</option>
+                            <option value="Sabotage">🗡️ Sabotage</option>
+                        </select>
+                        <input type="number" class="form-input" id="specXP" value="5000" style="width:90px" placeholder="XP">
+                        <button class="btn btn-sm btn-primary" onclick="GameplayTab.awardSpecXP()">+XP to Track</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        this.fls_id = document.getElementById('gpFls')?.value || '';
+        this.loadPlayers();
+        this.loadLandsraad();
+        this.loadSpecs();
+    },
+
+    async loadPlayers() {
+        try {
+            const data = await api.get('/players?limit=20');
+            const sel = document.getElementById('gpPlayerSelect');
+            if (!sel) return;
+            const players = data.players || [];
+            sel.innerHTML = '<option value="">-- Select player --</option>' +
+                players.map(p => `<option value="${p.fls_id||''}" data-account="${p.account_id||''}">${p.character_name||'Unknown'} (${p.fls_id||'?'})</option>`).join('');
+            // Pre-select if current FLS matches
+            const currentFls = document.getElementById('gpFls')?.value;
+            if (currentFls) sel.value = currentFls;
+        } catch(e) {}
+    },
+
+    selectPlayer() {
+        const sel = document.getElementById('gpPlayerSelect');
+        const fls = document.getElementById('gpFls');
+        if (sel && fls) {
+            fls.value = sel.value;
+        }
+    },
+
+    async loadSpecs() {
+        try {
+            const data = await api.get('/gameplay/specializations/status?player_id=2');
+            const el = document.getElementById('specStatus');
+            if (!el) return;
+            const bars = (data.tracks||[]).map(t => {
+                const pct = Math.min(100, (t.xp_amount||0)/44182*100);
+                const emoji = {Combat:'⚔️',Crafting:'🔧',Exploration:'🗺️',Gathering:'🌿',Sabotage:'🗡️'}[t.track_type]||'⭐';
+                return `<div style="margin:2px 0"><strong>${emoji} ${t.track_type}</strong> Lvl ${t.level} (${(t.xp_amount||0).toLocaleString()} XP)
+                <div style="background:#333;height:6px;border-radius:3px;margin-top:2px"><div style="background:#4caf50;height:6px;border-radius:3px;width:${pct}%"></div></div></div>`;
+            }).join('');
+            el.innerHTML = bars;
+        } catch(e) {}
+    },
+    async awardSpecXP() {
+        const track = document.getElementById('specTrack')?.value || 'Combat';
+        const xp = parseInt(document.getElementById('specXP')?.value || '5000');
+        try {
+            const r = await api.post(`/gameplay/specializations/award-xp?track=${track}&amount=${xp}`);
+            showToast(r.message || 'XP awarded!', 'success');
+            this.loadSpecs();
+        } catch(e) { showToast(e.message, 'error'); }
+    },
+
+    getFls() { return document.getElementById('gpFls')?.value || 'FC4D3B70DB35663'; },
+
+    async giveSolaris(amount) {
+        const btn = event.target;
+        btn.disabled = true; btn.textContent = '...';
+        try {
+            const r = await fetch('/api/v1/gameplay/give-solari', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({fls_id: this.getFls(), amount})
+            });
+            const data = await r.json();
+            showToast(data.message || `+${amount.toLocaleString()} Solaris!`, 'success');
+        } catch(e) { showToast('Error: ' + e.message, 'error'); }
+        btn.disabled = false; btn.textContent = `+${(amount/1e9).toFixed(0)}B Solaris`;
+    },
+    async giveScrip(amount) {
+        const btn = event.target;
+        btn.disabled = true; btn.textContent = '...';
+        try {
+            const r = await fetch('/api/v1/gameplay/give-scrip', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({fls_id: this.getFls(), amount})
+            });
+            const data = await r.json();
+            showToast(data.message || `+${amount.toLocaleString()} Scrip!`, 'success');
+        } catch(e) { showToast('Error: ' + e.message, 'error'); }
+        btn.disabled = false; btn.textContent = `+${(amount/1e9).toFixed(0)}B Scrip`;
+    },
+    async awardIntel(amount) {
+        try {
+            await api.post('/gameplay/intel/award', {account_id: 1, amount});
+            showToast(`+${amount} Intel awarded!`);
+        } catch(e) { showToast(e.message, 'error'); }
+    },
+    async awardXP(cat, xp) {
+        try {
+            await api.post('/gameplay/award-xp', {fls_id: this.getFls(), category: cat, experience: xp});
+            showToast(`+${xp} ${cat} XP sent!`);
+        } catch(e) { showToast(e.message, 'error'); }
+    },
+    async setSkillPoints(pts) {
+        try {
+            await api.post('/gameplay/skills/set-points', {fls_id: this.getFls(), points: pts});
+            showToast(`${pts} skill points set!`);
+        } catch(e) { showToast(e.message, 'error'); }
+    },
+    async unlockAllClasses() {
+        for (const c of ['Trooper','Mentat','Swordmaster','BeneGesserit','Planetologist','Fremen']) {
+            try { await api.post('/players/cheat-script', {fls_id: this.getFls(), script_name: `Unlock${c}`}); } catch(e) {}
+        }
+        showToast('All 6 classes unlocking!');
+    },
+    async maxAllSkills() {
+        const modules = ['Trooper','Mentat','Swordmaster','BeneGesserit','Planetologist','Fremen'].flatMap(c => [1,2,3].map(l => `Skills.Key.${c}${l}`));
+        for (const m of modules) {
+            try { await api.post('/gameplay/skills/set-module', {fls_id: this.getFls(), module: m, level: 3}); } catch(e) {}
+        }
+        showToast(`${modules.length} skills maxed!`);
+    },
+    async teleportToPlayer() {
+        const target = document.getElementById('gpTarget')?.value;
+        if (!target) return showToast('Enter target FLS ID', 'error');
+        try { await api.post('/gameplay/teleport/to-player', {source_fls_id: this.getFls(), target_fls_id: target}); showToast(`Teleporting to ${target}!`); }
+        catch(e) { showToast(e.message, 'error'); }
+    },
+    async broadcast() {
+        const title = document.getElementById('gpTitle')?.value || 'Server';
+        const body = document.getElementById('gpMsg')?.value || '';
+        try { await api.post('/gameplay/chat/broadcast', {title, body, duration_sec: 15}); showToast('Broadcast sent!'); }
+        catch(e) { showToast(e.message, 'error'); }
+    },
+    async loadLandsraad() {
+        try {
+            const data = await api.get('/gameplay/landsraad/overview');
+            const el = document.getElementById('landsraadData');
+            if (!el) return;
+            const totalRewards = (data.houses||[]).reduce((s,h) => s + (h.goal_amount||0), 0);
+            el.innerHTML = '<p><strong>' + data.count + ' Landsraad houses</strong> | Total: <strong>' + totalRewards.toLocaleString() + ' Scrip</strong></p>' +
+                (data.houses||[]).slice(0,25).map(h => '<div class="stat-card"><div class="stat-value">' + (h.goal_amount||0).toLocaleString() + '</div><div class="stat-label">' + (h.house_name||'').replace('DA_House','') + '</div>' + (h.completed ? '<div style=\"color:#4caf50;font-size:10px\">✅</div>' : '') + '</div>').join('');
+        } catch(e) {}
+    },
+    async spawnVehicleParts() {
+        try {
+            await api.post('/gameplay/repair-gear', {fls_id: this.getFls()});
+            showToast('Gear repaired for ' + this.getFls());
+        } catch(e) { showToast(e.message, 'error'); }
+    },
+    async cleanInventory() {
+        try {
+            await api.post('/gameplay/clean-inventory', {fls_id: this.getFls()});
+            showToast('Inventory cleaned for ' + this.getFls());
+        } catch(e) { showToast(e.message, 'error'); }
+    },
+    async resetProgression() {
+        if (!confirm('Reset character progression? This cannot be undone!')) return;
+        try {
+            await api.post('/gameplay/journey/reset', {fls_id: this.getFls()});
+            showToast('Progression reset for ' + this.getFls());
+        } catch(e) { showToast(e.message, 'error'); }
+    },
+    async grantAllTech() {
+        try {
+            await api.post('/gameplay/grant-all-tech', {account_id: 1});
+            showToast('All tech recipes granting!');
+        } catch(e) { showToast(e.message, 'error'); }
+    },
+    async completeAllQuests() {
+        try {
+            const r = await api.post('/gameplay/quests/complete-all');
+            showToast(r.message || 'Quests completed!', 'success');
+        } catch(e) { showToast(e.message, 'error'); }
+    },
+    async grantAllKeystones() {
+        try {
+            const r = await api.post('/gameplay/keystones/grant-all?player_id=2');
+            showToast(r.message || 'Keystones granted!', 'success');
+        } catch(e) { showToast(e.message, 'error'); }
+    },
+    async maxFactionRep() {
+        try {
+            const r = await api.post('/gameplay/faction/max-reputation?faction_id=2&player_id=2');
+            showToast(r.message || 'Faction rep maxed!', 'success');
+        } catch(e) { showToast(e.message, 'error'); }
+    },
+    async playtestSetup() {
+        try {
+            await api.post('/players/cheat-script', {fls_id: this.getFls(), script_name: 'PlaytestSetupAdmin'});
+            showToast('Full gear setup sent!');
+        } catch(e) { showToast(e.message, 'error'); }
+    }
+    async loadLandsraad() {
+        try {
+            const data = await api.get('/gameplay/landsraad/overview');
+            const el = document.getElementById('landsraadData');
+            if (!el) return;
+            const totalRewards = (data.houses||[]).reduce((s,h) => s + (h.goal_amount||0), 0);
+            el.innerHTML = `<p><strong>${data.count} Landsraad houses</strong> | Total: <strong>${totalRewards.toLocaleString()} Scrip</strong></p>
+                <p class="text-muted" style="font-size:10px">Dekrety i głosowanie — tylko w grze. Panel tylko uzupełnia punkty.</p>
+                <div class="grid-3 mt-1">${(data.houses||[]).slice(0,25).map(h => 
+                    `<div class="stat-card"><div class="stat-value">${(h.goal_amount||0).toLocaleString()}</div>
+                    <div class="stat-label">${(h.house_name||'').replace('DA_House','')}</div>
+                    ${h.completed ? '<div style="color:#4caf50;font-size:10px">✅</div>' : ''}</div>`
+                ).join('')}</div>`;
+        } catch(e) {}
+    },
+    async spawnVehicleParts() {
+        const vtype = document.getElementById('gpVehicle')?.value;
+        if (!vtype) return;
+        try {
+            const r = await api.post('/gameplay/vehicles/spawn-parts', {fls_id: this.getFls(), vehicle_type: vtype});
+            showToast(r.message || 'Parts sent!', r.ok ? 'success' : 'error');
+        } catch(e) { showToast(e.message, 'error'); }
+    },
+    async autoCompleteMissions() {
+        try {
+            const faction = document.getElementById('gpFaction')?.value || '2';
+            const r = await api.post(`/gameplay/landsraad/auto-complete?faction_id=${faction}`);
+            showToast(r.message || 'Missions completed!', 'success');
+            setTimeout(() => this.loadLandsraad(), 2000);
+        } catch(e) { showToast(e.message, 'error'); }
+    },
+    async forceNewTerm() {
+        if (!confirm('Create a NEW Landsraad term? This resets the board with 25 fresh tasks.')) return;
+        try {
+            const r = await api.post('/gameplay/landsraad/force-new-term');
+            showToast(r.message, 'success');
+            setTimeout(() => this.loadLandsraad(), 2000);
+        } catch(e) { showToast(e.message, 'error'); }
+    },
+    async maxSpecializations() {
+        try {
+            const r = await api.post('/gameplay/specializations/max');
+            showToast(r.message || 'Specializations maxed!', 'success');
+        } catch(e) { showToast(e.message, 'error'); }
+    },
+    async grantAllTech() {
+        try {
+            await api.post('/gameplay/grant-all-tech', {account_id: 1});
+            showToast('All tech recipes granting!');
+        } catch(e) { showToast(e.message, 'error'); }
+    },
+    async completeAllQuests() {
+        try {
+            const r = await api.post('/gameplay/quests/complete-all');
+            showToast(r.message || 'Quests completed!', 'success');
+        } catch(e) { showToast(e.message, 'error'); }
+    },
+    async grantAllKeystones() {
+        try {
+            const r = await api.post('/gameplay/keystones/grant-all?player_id=2');
+            showToast(r.message || 'Keystones granted!', 'success');
+        } catch(e) { showToast(e.message, 'error'); }
+    },
+    async maxFactionRep() {
+        try {
+            const r = await api.post('/gameplay/faction/max-reputation?faction_id=2&player_id=2');
+            showToast(r.message || 'Faction rep maxed!', 'success');
+        } catch(e) { showToast(e.message, 'error'); }
+    },
+    async giveItemLive() {
+        const template = document.getElementById('gpItem')?.value;
+        const qty = parseInt(document.getElementById('gpQty')?.value || '1000');
+        if (!template) return showToast('Select item', 'error');
+        try {
+            const r = await fetch('/api/v1/gameplay/give-item-live', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({fls_id: this.getFls(), template, qty, durability: 1.0})
+            });
+            const data = await r.json();
+            showToast(`${data.message || 'Sent!'}`, 'success');
+        } catch(e) { showToast('Error: ' + e.message, 'error'); }
+    },
+    async giveWelcomePack(kit = 'starter') {
+        const fls = this.getFls();
+        if (!fls) return showToast('Select a player first!', 'error');
+        try {
+            const r = await fetch(`/api/v1/gameplay/welcome/give-starter-kit?fls_id=${fls}&kit=${kit}`, { method: 'POST' });
+            const data = await r.json();
+            showToast(data.message || 'Kit sent!', 'success');
+        } catch(e) { showToast('Error: ' + e.message, 'error'); }
+    },
+    async playtestSetup() {
+        try {
+            await api.post('/players/cheat-script', {fls_id: this.getFls(), script_name: 'PlaytestSetupAdmin'});
+            showToast('Full gear setup sent!');
+        } catch(e) { showToast(e.message, 'error'); }
+    },
+    async fillWater() {
+        try {
+            await api.post('/gameplay/fill-water', {fls_id: this.getFls()});
+            showToast('Water filled!');
+        } catch(e) { showToast(e.message, 'error'); }
+    },
+    async repairGear() {
+        try {
+            await api.post('/gameplay/repair-gear', {fls_id: this.getFls()});
+            showToast('Gear repaired!');
+        } catch(e) { showToast(e.message, 'error'); }
+    },
+    async cleanInventory() {
+        if (!confirm('Delete ALL inventory items?')) return;
+        try {
+            await api.post('/gameplay/clean-inventory', {fls_id: this.getFls()});
+            showToast('Inventory cleaned!');
+        } catch(e) { showToast(e.message, 'error'); }
+    },
+    async resetProgression() {
+        if (!confirm('Reset ALL progression? CANNOT BE UNDONE!')) return;
+        try {
+            await api.post('/gameplay/reset-progression', {fls_id: this.getFls()});
+            showToast('Progression reset!');
+        } catch(e) { showToast(e.message, 'error'); }
+    },
+};

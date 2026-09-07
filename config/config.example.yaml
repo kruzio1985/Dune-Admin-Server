@@ -1,0 +1,117 @@
+# Dune Admin Manager - Configuration Example
+# Copy this file to config.yaml and adjust to your setup
+
+# ── Provider ──────────────────────────────────────────────────────────────────
+# One of: hyperv, docker, kubectl, amp, local
+provider: hyperv
+
+# ── Hyper-V Provider ──────────────────────────────────────────────────────────
+hyperv:
+  vm_name: dune-awakening
+  server_path: "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Dune Awakening Self-Hosted Server"
+  memory_gb: 20
+
+# ── SSH Connection ────────────────────────────────────────────────────────────
+ssh:
+  host: 127.0.0.1
+  port: 22
+  user: dune
+  key_path: ""  # auto-detected: %LOCALAPPDATA%\DuneAwakeningServer\sshKey
+  # Alternative: password auth
+  # password: ""
+  mode: library  # library | command (uses system ssh)
+
+# ── Game Database (PostgreSQL inside VM) ──────────────────────────────────────
+database:
+  host: 127.0.0.1
+  port: 15432
+  user: dune
+  password: ""
+  database: dune
+  schema: dune
+
+# ── RabbitMQ (inside VM) ──────────────────────────────────────────────────────
+rabbitmq:
+  game_addr: ""
+  admin_addr: ""
+
+# ── Backups ───────────────────────────────────────────────────────────────────
+backup_dir: "./backups"
+auto_backup_enabled: false
+auto_backup_interval_hours: 6
+max_backups: 10
+
+# ── Web Server ────────────────────────────────────────────────────────────────
+listen_addr: "127.0.0.1"
+listen_port: 8080
+
+# ── Authentication ────────────────────────────────────────────────────────────
+auth:
+  enabled: false  # Enable for production
+
+  # Method 1: Local username/password
+  local_enabled: true
+  local_username: admin
+  local_password_hash: ""  # bcrypt hash (use --set-password)
+
+  # Method 2: Discord OAuth
+  discord_enabled: false
+  discord_client_id: ""
+  discord_client_secret: ""
+  discord_bot_token: ""
+  discord_guild_id: ""
+
+  # Session
+  session_ttl_hours: 24
+
+  # Guest access (read-only)
+  guest_enabled: false
+
+  # Owner overrides
+  owner_discord_ids: []
+  owner_role_ids: []
+
+# ── Permissions ───────────────────────────────────────────────────────────────
+permissions_file: "./config/permissions.yaml"
+
+# ── Market Bot ────────────────────────────────────────────────────────────────
+market_bot:
+  enabled: false
+  cache_db: "./data/market-bot-cache.db"
+  item_data: "./data/catalogs/item-catalog.json"
+  buy_interval_minutes: 5
+  list_interval_minutes: 30
+  buy_threshold: 1.05
+  max_buys: 50
+
+# ── Welcome Package ───────────────────────────────────────────────────────────
+welcome_package:
+  enabled: false
+  scan_interval_seconds: 30
+  active_version: v1
+  packages:
+    - version: v1
+      items:
+        - { template: AluminiumBar, qty: 5, quality: 0 }
+
+# ── Message of the Day ────────────────────────────────────────────────────────
+motd:
+  enabled: false
+  message: "Welcome to the server, {player}!"
+  source_player: ""  # Empty = GM persona
+
+# ── Scheduler ─────────────────────────────────────────────────────────────────
+scheduler:
+  enabled: false
+  daily_restart_time: "04:00"
+  restart_warning_lead_minutes: 30
+  restart_warning_frequency_minutes: 10
+  timezone: "Europe/Warsaw"
+  update_apply_enabled: false
+  update_apply_lead_hours: 1
+
+# ── Logging ───────────────────────────────────────────────────────────────────
+logging:
+  level: INFO
+  file: "./logs/dune-admin.log"
+  audit_log: "./logs/audit.log"

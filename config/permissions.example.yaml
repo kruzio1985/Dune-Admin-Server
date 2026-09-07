@@ -1,0 +1,68 @@
+# Dune Admin Manager - Permissions
+# Role-based access control matrix
+# 28 fine-grained capabilities
+
+roles:
+  # Wbudowane role
+  Owner:
+    description: "Full access to everything"
+    capabilities: ["*"]
+
+  Admin:
+    description: "Administrative access"
+    capabilities:
+      - "dashboard:read"
+      - "battlegroup:manage"
+      - "players:read"
+      - "players:write"
+      - "server:manage"
+      - "database:manage"
+      - "logs:read"
+      - "market:manage"
+      - "welcome:manage"
+      - "monitoring:read"
+      - "scheduler:manage"
+      - "auth:manage"
+      - "events:read"
+
+  Moderator:
+    description: "Player management and monitoring"
+    capabilities:
+      - "dashboard:read"
+      - "players:read"
+      - "players:write"
+      - "logs:read"
+      - "monitoring:read"
+      - "events:read"
+
+  Viewer:
+    description: "Read-only access"
+    capabilities:
+      - "dashboard:read"
+      - "players:read"
+      - "monitoring:read"
+      - "events:read"
+
+  # Guest (niezalogowany)
+  Guest:
+    description: "Minimal read-only access"
+    capabilities:
+      - "dashboard:read"
+
+  # Default (nieprzypisany członek)
+  Default:
+    description: "Default member access"
+    capabilities:
+      - "dashboard:read"
+      - "players:read"
+      - "market:read"
+
+# Discord role mapping (role_id -> role_name)
+discord_role_map: {}
+
+# Discord user mapping (user_id -> role_name)
+discord_user_map: {}
+
+# Local users (username -> role_name)
+local_users:
+  admin: Owner

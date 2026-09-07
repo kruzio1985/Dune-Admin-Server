@@ -1,0 +1,56 @@
+╔══════════════════════════════════════════════════════╗
+║     🏜️  DUNE ADMIN MANAGER - INSTALL GUIDE          ║
+╚══════════════════════════════════════════════════════╝
+
+📋 WHAT YOU NEED:
+  - Python 3.11 or newer (ONE TIME install)
+  - That's it!
+
+🚀 QUICK START (2 STEPS):
+
+  STEP 1: Install Python (first time only)
+    📥 Download: https://www.python.org/downloads/
+    ⚠️  IMPORTANT: During install, CHECK:
+       [✓] "Add Python to PATH"
+       [✓] "Install for all users" (optional)
+
+  STEP 2: Double-click START.bat
+    ✅ Checks Python
+    ✅ Installs required packages automatically
+    ✅ Creates configuration
+    ✅ Starts server + opens browser
+
+🌐 AFTER START:
+  http://127.0.0.1:8080
+
+  Default tabs:
+  📊 Dashboard    - VM & battlegroup status
+  ⚔️ Battlegroup  - Start/Stop/Restart/Update
+  👤 Players      - Manage player accounts
+  🎨 Characters   - Edit stats, inventory, skills
+  ⚙️ Settings     - 23 game config options + presets
+  🗄️ Database     - Backup/restore, SQL console
+  📋 Logs         - Game logs, cheat detection
+  📈 Market Bot   - Trading bot controls
+  🎁 Welcome      - Auto-grant items on first login
+  📘 Blueprints   - 485 blueprint catalog + give to players
+  🏆 Battlepass   - 158 tiers, player progress
+  🔧 Setup Wizard - 6-step guided installation
+
+📁 FILES:
+  START.bat      - Main launcher (double-click)
+  START.ps1       - PowerShell launcher (right-click -> Run)
+  backend/        - Python server code
+  frontend/       - Web UI (Dune dark theme)
+  data/catalogs/  - Game item/skill catalogs
+  config/         - Server configuration
+
+⚠️ TROUBLESHOOTING:
+  "Python not found"  -> Install Python from python.org
+  "Port 8080 in use"  -> Close other apps using port 8080
+  "Page not loading"  -> Press Ctrl+Shift+R in browser
+  "SSH connection failed" -> Dune VM not running (expected)
+
+📞 NEED A DUNE SERVER?
+  Install via Steam: Dune Awakening Self-Hosted Server
+  Or see: https://duneawakening.com/self-hosted-servers/

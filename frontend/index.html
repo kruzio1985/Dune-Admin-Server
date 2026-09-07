@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dune Admin Manager</title>
+    <link rel="stylesheet" href="/static/css/style.css?v=20">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2245%22 r=%2230%22 fill=%22%23D6A85F%22 opacity=%22.3%22/><circle cx=%2250%22 cy=%2245%22 r=%2220%22 fill=%22%23A66A3F%22 opacity=%22.6%22/><path d=%22M15 65 Q33 50 50 60 Q67 70 85 55%22 stroke=%22%23D6A85F%22 stroke-width=%222%22 fill=%22none%22 opacity=%22.5%22/><path d=%22M10 72 Q33 58 50 68 Q67 78 90 64%22 stroke=%22%23A66A3F%22 stroke-width=%221.5%22 fill=%22none%22 opacity=%22.3%22/></svg>"></head>
+<body>
+    <!-- Top Bar -->
+    <header class="top-bar">
+        <div class="logo">
+            <img class="logo-icon" src="/static/img/logo.png?v=2" alt="DAM">    
+            <span class="logo-text">Dune Admin</span>
+            <span class="logo-version">v0.1.0</span>
+        </div>
+        <div class="server-status" id="serverStatus">
+            <span class="status-dot offline" id="statusDot"></span>
+            <span class="status-text" id="statusLine">SYSTEM OFFLINE</span>
+        </div>
+        <div class="user-area" id="userArea">
+            <button class="btn btn-ghost" onclick="showLogin()">◇ LOGIN</button>
+        </div>
+    </header>
+
+    <!-- Main Layout -->
+    <div class="main-container">
+        <!-- Sidebar -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Operations</div>
+                <a href="#" class="sidebar-link active" data-tab="dashboard">
+                    <span class="sidebar-icon">◇</span> Dashboard
+                </a>
+                <a href="#" class="sidebar-link" data-tab="battlegroup">
+                    <span class="sidebar-icon">◆</span> Battlegroup
+                </a>
+                <a href="#" class="sidebar-link" data-tab="logs">
+                    <span class="sidebar-icon">☰</span> Logs
+                </a>
+                <a href="#" class="sidebar-link" data-tab="database">
+                    <span class="sidebar-icon">⊞</span> Database
+                </a>
+                <a href="#" class="sidebar-link" data-tab="database-editor">
+                    <span class="sidebar-icon">⚙</span> DB Editor
+                </a>
+                <a href="#" class="sidebar-link" data-tab="server-settings">
+                    <span class="sidebar-icon">◉</span> Server Settings
+                </a>
+                <a href="#" class="sidebar-link" data-tab="extra-settings">
+                    <span class="sidebar-icon">⊕</span> Extra Settings
+                </a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Player World</div>
+                <a href="#" class="sidebar-link" data-tab="players">
+                    <span class="sidebar-icon">●</span> Players
+                </a>
+                <a href="#" class="sidebar-link" data-tab="characters">
+                    <span class="sidebar-icon">⬡</span> Characters
+                </a>
+                <a href="#" class="sidebar-link" data-tab="storage">
+                    <span class="sidebar-icon">□</span> Storage
+                </a>
+                <a href="#" class="sidebar-link" data-tab="bases">
+                    <span class="sidebar-icon">▣</span> Bases
+                </a>
+                <a href="#" class="sidebar-link" data-tab="blueprints">
+                    <span class="sidebar-icon">◻</span> Blueprints
+                </a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Economy</div>
+                <a href="#" class="sidebar-link" data-tab="landsraad">
+                    <span class="sidebar-icon">△</span> Landsraad
+                </a>
+                <a href="#" class="sidebar-link" data-tab="market">
+                    <span class="sidebar-icon">▲</span> Market
+                </a>
+                <a href="#" class="sidebar-link" data-tab="market-bot">
+                    <span class="sidebar-icon">⊗</span> Market Bot
+                </a>
+                <a href="#" class="sidebar-link" data-tab="broadcast">
+                    <span class="sidebar-icon">⊙</span> Broadcast
+                </a>
+                <a href="#" class="sidebar-link" data-tab="welcome">
+                    <span class="sidebar-icon">☆</span> Welcome Kits
+                </a>
+                <a href="#" class="sidebar-link" data-tab="give-items">
+                    <span class="sidebar-icon">⊞</span> Give Items
+                </a>
+                <a href="#" class="sidebar-link" data-tab="items">
+                    <span class="sidebar-icon">⊞</span> Item Catalog
+                </a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Management</div>
+                <a href="#" class="sidebar-link" data-tab="settings">
+                    <span class="sidebar-icon">⚙</span> Settings
+                </a>
+                <a href="#" class="sidebar-link" data-tab="commands">
+                    <span class="sidebar-icon">⏻</span> Commands
+                </a>
+                <a href="#" class="sidebar-link" data-tab="gameplay">
+                    <span class="sidebar-icon">◇</span> Gameplay Admin
+                </a>
+                <a href="#" class="sidebar-link" data-tab="monitoring">
+                    <span class="sidebar-icon">⊙</span> Monitoring
+                </a>
+                <a href="#" class="sidebar-link" data-tab="scheduler">
+                    <span class="sidebar-icon">◷</span> Scheduler
+                </a>
+                <a href="#" class="sidebar-link" data-tab="setup">
+                    <span class="sidebar-icon">⚙</span> Setup Wizard
+                </a>
+            </div>
+        </nav>
+
+        <!-- Content Area -->
+        <main class="content" id="content">
+            <!-- Tab content loaded dynamically -->
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading...</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- Live Console (collapsible bottom panel) -->
+    <div class="console-panel" id="consolePanel" style="display: none;">
+        <div class="console-header">
+            <span>Live Console</span>
+            <button class="btn btn-sm" onclick="toggleConsole()">×</button>
+        </div>
+        <div class="console-output" id="consoleOutput"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/static/js/api.js?ts=20260730"></script>
+    <script src="/static/js/websocket.js?ts=20260730"></script>
+    <script src="/static/js/tabs/dashboard_v2.js?ts=20260804a"></script>
+    <script src="/static/js/tabs/battlegroup.js?ts=20260730"></script>
+    <script src="/static/js/tabs/players.js?ts=20260803a"></script>
+    <script src="/static/js/tabs/characters_v2.js?ts=20260802z"></script>
+    <script src="/static/js/tabs/server-settings_v2.js?ts=20260803x"></script>
+    <script src="/static/js/tabs/extra-settings2.js?ts=20260803c"></script>
+    <script src="/static/js/tabs/database_v2.js?ts=20260803x"></script>
+    <script src="/static/js/tabs/database-editor.js?ts=20260804a"></script>
+    <script src="/static/js/tabs/logs.js?ts=20260803c"></script>
+    <script src="/static/js/tabs/market.js?ts=20260804c"></script>
+    <script src="/static/js/tabs/market_bot.js?ts=20260803x"></script>
+    <script src="/static/js/tabs/broadcast.js?ts=20260803b"></script>
+    <script src="/static/js/tabs/welcome.js?ts=20260803b"></script>
+    <script src="/static/js/tabs/give_items.js?ts=20260804c"></script>
+    <script src="/static/js/tabs/storage.js?ts=20260803f"></script>
+    <script src="/static/js/tabs/bases.js?ts=20260803g"></script>
+    <script src="/static/js/tabs/blueprints.js?ts=20260803e"></script>
+    <script src="/static/js/tabs/items.js?ts=20260803b"></script>
+    <script src="/static/js/tabs/monitoring.js?ts=20260803a"></script>
+    <script src="/static/js/tabs/setup-wizard.js?ts=20260803x"></script>
+    <script src="/static/js/tabs/scheduler.js?ts=20260803x"></script>
+    <script src="/static/js/tabs/settings.js?ts=20260818a"></script>
+    <script src="/static/js/tabs/commands.js?ts=20260803x"></script>
+    <script src="/static/js/tabs/gameplay.js?ts=20260804a"></script>
+    <script src="/static/js/app_clean.js?ts=20260804a"></script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+.venv/
+venv/
+env/
+
+# Dane wrażliwe i generowane
+config.yaml
+config/config.yaml
+.env
+*.log
+logs/
+backups/
+data/*.db
+data/*.sqlite*
+
+# Node / frontend-v2
+node_modules/
+frontend-v2/dist/
+frontend-v2/node_modules/
+
+# Klucze SSH
+*.pem
+*.key
+id_rsa
+id_ed25519
+
+# IDE
+.vscode/
+.idea/
+
+# System
+Thumbs.db
+.DS_Store

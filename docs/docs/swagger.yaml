@@ -1,0 +1,6564 @@
+basePath: /
+definitions:
+  main.ServerConfig:
+    properties:
+      amp_api_host:
+        type: string
+      amp_api_pass:
+        type: string
+      amp_api_port:
+        type: integer
+      amp_api_user:
+        type: string
+      amp_backup_dir:
+        type: string
+      amp_container:
+        type: string
+      amp_container_runtime:
+        type: string
+      amp_container_stop_timeout:
+        description: |-
+          Container-restart stop timeout (seconds; 0 → built-in default) and whether
+          an AMP update auto-restarts the container when it finishes (nil → true).
+        type: integer
+      amp_data_root:
+        type: string
+      amp_instance:
+        description: AMP-specific.
+        type: string
+      amp_log_path:
+        type: string
+      amp_pg_bin:
+        type: string
+      amp_pg_lib:
+        type: string
+      amp_update_auto_restart:
+        type: boolean
+      amp_use_container:
+        type: boolean
+      amp_user:
+        type: string
+      auto_discover:
+        type: boolean
+      backup_dir:
+        description: Paths.
+        type: string
+      broker_admin_addr:
+        type: string
+      broker_exec_prefix:
+        type: string
+      broker_game_addr:
+        description: Broker — RabbitMQ for capture / notification.
+        type: string
+      broker_jwt_secret:
+        type: string
+      broker_pass:
+        type: string
+      broker_tls:
+        type: boolean
+      broker_user:
+        type: string
+      cmd_restart:
+        type: string
+      cmd_start:
+        description: local-specific shell commands.
+        type: string
+      cmd_status:
+        type: string
+      cmd_stop:
+        type: string
+      control:
+        description: Control plane.
+        type: string
+      control_namespace:
+        type: string
+      db_host:
+        description: Database — always required per server.
+        type: string
+      db_name:
+        type: string
+      db_pass:
+        type: string
+      db_port:
+        type: integer
+      db_schema:
+        type: string
+      db_user:
+        type: string
+      default_ini_dir:
+        type: string
+      director_url:
+        description: Director proxy.
+        type: string
+      docker_broker_admin:
+        type: string
+      docker_broker_game:
+        type: string
+      docker_db:
+        type: string
+      docker_gameserver:
+        description: docker-specific container names.
+        type: string
+      id:
+        description: |-
+          ID is the DB-assigned numeric server id (exposed as a JSON number). It is
+          NOT read from YAML — legacy config.yaml stored string ids, captured by
+          LegacyID below for the one-time import remap.
+        type: integer
+      market_bot_enabled:
+        description: |-
+          Market bot enable toggle — PER SERVER. The rest of the market-bot config
+          (intervals, thresholds, cache base, item data) is global/shared in
+          appConfig. nil means "not set" → OFF (explicit opt-in per server).
+        type: boolean
+      name:
+        type: string
+      server_ini_dir:
+        type: string
+      ssh_extra_opts:
+        type: string
+      ssh_host:
+        description: Transport — SSH fields.
+        type: string
+      ssh_key:
+        type: string
+      ssh_mode:
+        type: string
+      ssh_user:
+        type: string
+      timezone:
+        description: |-
+          Timezone is an IANA tz name (e.g. "America/New_York") applied to all
+          time-aware features for this server (activity charts, scheduled restarts,
+          backups). Empty means host-local time. Schedule-level timezone fields fall
+          back to this when set; this wins over them when non-empty.
+        type: string
+      web_interface_host_override:
+        description: |-
+          WebInterfaceHostOverride, when non-empty, replaces the auto-derived SSH
+          host in discovered Web Interface URLs (issue #234). Useful when the SSH
+          jump host differs from the host that serves the director/file-browser
+          node ports. Leave blank to use the SSH host automatically.
+        type: string
+    type: object
+  main.activityPoint:
+    properties:
+      count:
+        type: integer
+      day:
+        type: string
+    type: object
+  main.appConfig:
+    properties:
+      amp_api_host:
+        type: string
+      amp_api_pass:
+        type: string
+      amp_api_port:
+        type: integer
+      amp_api_user:
+        description: |-
+          AMP Web API credentials — let dune-admin manage server settings under AMP
+          by writing them through AMP's own config API (Core/SetConfig), so they
+          survive AMP regenerating the game INIs. The API is the instance ADS,
+          reached in-container at 127.0.0.1:<amp_api_port> (default 8081). Set
+          amp_api_host when AMP's Web API runs on a different, reachable host than
+          the game server — a split control-plane topology (issue #284) — so the
+          call targets that host directly instead of the game host's own loopback.
+        type: string
+      amp_backup_dir:
+        type: string
+      amp_container:
+        type: string
+      amp_container_runtime:
+        description: |-
+          AmpContainerRuntime selects the container CLI used for in-container ops
+          (logs/INI/rabbitmqctl) when AmpUseContainer is true: "podman" (default)
+          or "docker". Empty → podman, so existing installs are unaffected.
+        type: string
+      amp_container_stop_timeout:
+        description: |-
+          AmpContainerStopTimeout is the seconds `<runtime> restart` waits for a
+          graceful stop before SIGKILL in container mode. 0 → the built-in default
+          (ampContainerStopTimeout). The runtime default of 10s is too short for the
+          game shards + in-container Postgres/RabbitMQ and can leave the container
+          wedged in "stopping" when podman escalates to SIGKILL.
+        type: integer
+      amp_data_root:
+        type: string
+      amp_instance:
+        description: AMP-specific — used when Control == "amp" (CubeCoders AMP w/
+          podman).
+        type: string
+      amp_log_path:
+        type: string
+      amp_pg_bin:
+        description: |-
+          DB backup tooling (#150). AmpPgBin/AmpPgLib locate the in-container PG17
+          pg_dump/pg_restore + their shared libs; empty → validated AMP defaults.
+          AmpBackupDir is the host dir for dumps; empty → <configDir>/db-backups.
+        type: string
+      amp_pg_lib:
+        type: string
+      amp_update_auto_restart:
+        description: |-
+          AmpUpdateAutoRestart controls whether an AMP "update" automatically restarts
+          the container once the SteamCMD update finishes (so it boots on the new
+          files). nil/unset → true. Set false to have update only trigger the update
+          and leave restarting to the operator.
+        type: boolean
+      amp_use_container:
+        type: boolean
+      amp_user:
+        type: string
+      auth_cookie_samesite:
+        description: 'AuthCookieSameSite: "" → Lax; "none" for cross-origin CDN setups
+          (TLS only).'
+        type: string
+      auth_discord_client_id:
+        type: string
+      auth_discord_client_secret:
+        type: string
+      auth_discord_enabled:
+        description: |-
+          Discord OAuth2 login (BYOA). Reuses discord_bot_token + discord_guild_id
+          for the membership/role lookup after the OAuth exchange.
+        type: boolean
+      auth_discord_redirect_url:
+        description: |-
+          AuthDiscordRedirectURL overrides the OAuth redirect; empty derives
+          scheme://host/api/v1/auth/discord/callback from each request.
+        type: string
+      auth_enabled:
+        description: |-
+          ── Dashboard authentication ──────────────────────────────────────────
+          AuthEnabled turns on login enforcement for the dashboard + API.
+          Pointer so "unset" (default-off) is distinguishable from explicit false.
+          When off, behavior is identical to releases without auth.
+        type: boolean
+      auth_guest_enabled:
+        description: |-
+          AuthGuestEnabled allows anyone to start a read-only "guest" session
+          from the login page — no credentials, default read-only capabilities.
+        type: boolean
+      auth_local_password_hash:
+        type: string
+      auth_local_password_new:
+        description: |-
+          AuthLocalPasswordNew is a write-only API field: when present in a saved
+          config it is bcrypt-hashed into AuthLocalPasswordHash and discarded.
+        type: string
+      auth_local_username:
+        description: |-
+          Local username/password login. The hash is bcrypt; set it via
+          `dune-admin --set-password` or the config UI (which sends the plaintext
+          in auth_local_password_new and never stores it).
+        type: string
+      auth_owner_discord_ids:
+        description: |-
+          Owners get full capabilities regardless of the permissions matrix.
+          The guild owner (via Discord API) and the local account are always
+          owners; these comma-separated lists add more.
+        type: string
+      auth_owner_role_ids:
+        type: string
+      auth_session_ttl_hours:
+        type: integer
+      auto_discover:
+        description: |-
+          AutoDiscover: when true, fill empty DB/RMQ/Director fields from the
+          running game-server process args at connect time (command-mode + kubectl).
+        type: boolean
+      backup_dir:
+        description: Backups — optional path accessed via the executor.
+        type: string
+      battlepass_auto_grant:
+        type: boolean
+      battlepass_award_past:
+        type: boolean
+      battlepass_enabled:
+        description: |-
+          ── Battlepass ─────────────────────────────────────────────────────────
+          BattlepassEnabled starts the tier-evaluation loop (default off).
+          BattlepassAwardPast rewards pre-existing progress on first evaluation;
+          default off — old progress is baselined and only new unlocks earn intel.
+          IMPORTANT: set award_past=true on the FIRST scan for an account — if
+          an account is first scanned with award_past=false, its tiers are written
+          as "baseline" permanently and flipping award_past later has no effect.
+          To repopulate Pending after changing modes, clear the battlepass_* tables
+          in dune-admin.db (or delete the whole file to reset all stores).
+          BattlepassScanPaceMs is the inter-player delay (ms) during evaluation;
+          0 disables pacing; negative → default 75ms; max 5000ms.
+          BattlepassScanStartDelayMs is the delay (ms) before the boot scan so the
+          server and DB pool finish warming; 0 is immediate; negative → 3000ms.
+          BattlepassAutoGrant (default off) records each newly-earned tier into a
+          deferred-grant ledger and delivers it automatically — to online AND
+          offline players — retrying with backoff up to deferredGrantMaxAttempts.
+          After exhaustion the tier reverts to manual-grant only.
+        type: boolean
+      battlepass_poll_seconds:
+        type: integer
+      battlepass_scan_pace_ms:
+        type: integer
+      battlepass_scan_start_delay_ms:
+        type: integer
+      broker_admin_addr:
+        type: string
+      broker_exec_prefix:
+        description: |-
+          BrokerExecPrefix is prepended to all rabbitmqctl calls. Use when the
+          broker runs inside a container that isn't managed by the docker control
+          plane — e.g. "podman exec AMP_MehDune01" or "docker exec my-broker".
+        type: string
+      broker_game_addr:
+        description: Broker — optional; if set, notifications and capture are available.
+        type: string
+      broker_jwt_secret:
+        description: |-
+          BrokerJWTSecret is the base64-encoded HMAC key used to re-sign
+          ServiceAuthTokens for CaptureJWT. Optional override for the baked-in
+          default signing key (captureJWTSecretB64).
+        type: string
+      broker_pass:
+        type: string
+      broker_tls:
+        type: boolean
+      broker_user:
+        type: string
+      cmd_restart:
+        type: string
+      cmd_start:
+        description: local-specific — configurable shell commands
+        type: string
+      cmd_status:
+        type: string
+      cmd_stop:
+        type: string
+      control:
+        description: 'Control plane: "kubectl" | "docker" | "local" | "amp"'
+        type: string
+      control_namespace:
+        description: kubectl-specific
+        type: string
+      db_host:
+        description: Database — always required.
+        type: string
+      db_name:
+        type: string
+      db_pass:
+        type: string
+      db_port:
+        type: integer
+      db_schema:
+        type: string
+      db_user:
+        type: string
+      default_ini_dir:
+        description: |-
+          DefaultIniDir is a local or remote path that contains DefaultGame.ini and
+          DefaultEngine.ini — the base layer of the INI hierarchy.
+        type: string
+      default_server:
+        type: string
+      default_server_name:
+        description: |-
+          DefaultServerName is the display name of the legacy flat "default" server,
+          so single-server installs can rename it. Blank → "Default".
+        type: string
+      director_url:
+        type: string
+      discord_announce_channel_id:
+        type: string
+      discord_bot_enabled:
+        description: |-
+          ── Discord bot ────────────────────────────────────────────────────────
+          DiscordBotEnabled starts the embedded Discord gateway bot. Pointer so we
+          can distinguish "unset" (default-off) from "explicitly false".
+        type: boolean
+      discord_bot_token:
+        type: string
+      discord_guild_id:
+        type: string
+      discord_roles_admin:
+        type: string
+      discord_roles_economy:
+        type: string
+      discord_roles_viewer:
+        description: Comma-separated Discord role IDs for each capability tier.
+        type: string
+      discord_status_channel_id:
+        type: string
+      discord_status_enabled:
+        description: |-
+          ── Discord status embed (#188) ────────────────────────────────────────
+          A persistent, auto-updating embed posted to one channel that the bot edits
+          in place every interval. Pointer so "unset" (default-off) is distinct from
+          explicit false. The posted message ID is persisted in the unified SQLite
+          store (meta table) so restarts edit the same message instead of re-posting.
+        type: boolean
+      discord_status_interval_seconds:
+        type: integer
+      docker_broker_admin:
+        type: string
+      docker_broker_game:
+        type: string
+      docker_db:
+        type: string
+      docker_gameserver:
+        description: docker-specific — container names
+        type: string
+      events_enabled:
+        description: |-
+          ── Live events engine ─────────────────────────────────────────────────
+          EventsEnabled starts the background polling engine. Per-event poll_seconds
+          and jitter_seconds are configured on each event definition.
+        type: boolean
+      listen_addr:
+        type: string
+      market_bot_buy_interval:
+        type: string
+      market_bot_buy_threshold:
+        type: number
+      market_bot_cache_db:
+        type: string
+      market_bot_enabled:
+        description: |-
+          ── Embedded market bot ────────────────────────────────────────────────
+          MarketBotEnabled starts the market bot as an in-process goroutine.
+          Pointer so we can distinguish "unset" (default-on) from "explicitly false".
+        type: boolean
+      market_bot_item_data:
+        type: string
+      market_bot_list_interval:
+        type: string
+      market_bot_max_buys:
+        type: integer
+      market_bot_remote_token:
+        type: string
+      market_bot_remote_url:
+        type: string
+      market_bot_state:
+        type: string
+      scrip_currency:
+        type: integer
+      server_ini_dir:
+        description: ServerIniDir is the directory containing UserGame.ini and UserOverrides.ini.
+        type: string
+      servers:
+        description: |-
+          Multi-server: when Servers is non-empty, connectAll is replaced by
+          connectMultiServer which calls connectServer for each entry. DefaultServer
+          names the initially-active server; if blank the first entry is used.
+          Existing flat-config installs (no servers: key) are unaffected.
+        items:
+          $ref: '#/definitions/main.ServerConfig'
+        type: array
+      ssh_extra_opts:
+        type: string
+      ssh_host:
+        description: |-
+          Transport — SSH fields. If ssh_host is set all commands + TCP connections
+          tunnel through SSH. If omitted everything runs/connects locally.
+        type: string
+      ssh_key:
+        type: string
+      ssh_mode:
+        description: |-
+          SSHMode selects the SSH transport: "" / "library" uses golang.org/x/crypto/ssh
+          (default); "command" shells out to the OS ssh client (honours ~/.ssh/config,
+          ProxyJump, ssh-agent; never reads a private key).
+        type: string
+      ssh_user:
+        type: string
+      timezone:
+        description: |-
+          Timezone is the server-level IANA tz name (e.g. "America/New_York") used
+          for activity charts, scheduled restarts, and backups. Empty = host-local.
+          When set, it takes precedence over any schedule-level timezone setting.
+        type: string
+      web_interface_host_override:
+        description: |-
+          WebInterfaceHostOverride is an optional per-server host that takes
+          precedence over the SSH host when building auto-discovered Web Interface
+          URLs (issue #234). Useful when the SSH jump host differs from the host
+          that serves the director/file-browser node ports.
+        type: string
+      welcome_package_active_version:
+        type: string
+      welcome_package_enabled:
+        description: |-
+          ── Welcome package ────────────────────────────────────────────────────
+          Auto-grants a configured item package to every player once, on first
+          login. Defaults OFF — it mutates every player's inventory, so it must be
+          explicitly opted into. Bump the version to re-issue to everyone.
+        type: boolean
+      welcome_package_items:
+        items:
+          $ref: '#/definitions/main.welcomePackageItem'
+        type: array
+      welcome_package_scan_interval_secs:
+        type: integer
+      welcome_package_version:
+        description: Legacy pre-library fields, migrated into WelcomePackages on load.
+        type: string
+      welcome_packages:
+        items:
+          $ref: '#/definitions/main.welcomePackage'
+        type: array
+    type: object
+  main.authSessionInfo:
+    properties:
+      avatar:
+        type: string
+      capabilities:
+        items:
+          type: string
+        type: array
+      method:
+        type: string
+      name:
+        type: string
+      owner:
+        type: boolean
+      sub:
+        type: string
+    type: object
+  main.authStatusResponse:
+    properties:
+      enabled:
+        type: boolean
+      methods:
+        properties:
+          discord:
+            type: boolean
+          guest:
+            type: boolean
+          local:
+            type: boolean
+        type: object
+      session:
+        $ref: '#/definitions/main.authSessionInfo'
+    type: object
+  main.authUserRecord:
+    properties:
+      capabilities:
+        items:
+          type: string
+        type: array
+      created_at:
+        type: string
+      enabled:
+        type: boolean
+      updated_at:
+        type: string
+      username:
+        type: string
+    type: object
+  main.authUserUpdateRequest:
+    properties:
+      capabilities:
+        items:
+          type: string
+        type: array
+      enabled:
+        type: boolean
+      password:
+        type: string
+    type: object
+  main.backupFile:
+    properties:
+      has_yaml:
+        type: boolean
+      modified:
+        type: string
+      name:
+        type: string
+      size_bytes:
+        type: integer
+    type: object
+  main.capabilityInfo:
+    properties:
+      description:
+        type: string
+      id:
+        type: string
+    type: object
+  main.characterBackup:
+    properties:
+      account_id:
+        type: integer
+      action:
+        type: string
+      character_name:
+        type: string
+      created_at:
+        type: string
+      file_path:
+        type: string
+      fls_id:
+        type: string
+      id:
+        type: integer
+      patches_checksum:
+        type: string
+      reason:
+        type: string
+    type: object
+  main.cheatEntry:
+    properties:
+      character_name:
+        type: string
+      cheat_type:
+        type: string
+      event_time:
+        type: string
+      fls_id:
+        type: string
+    type: object
+  main.currencyRow:
+    properties:
+      balance:
+        type: integer
+      currency_id:
+        type: integer
+      player_id:
+        type: integer
+    type: object
+  main.dbRestoreStatus:
+    properties:
+      done:
+        type: boolean
+      error:
+        type: string
+      failed:
+        type: boolean
+      file:
+        type: string
+      ignored_errors:
+        type: integer
+      output:
+        type: string
+      running:
+        type: boolean
+      servers_stopped:
+        type: boolean
+      steps:
+        items:
+          $ref: '#/definitions/main.restoreStepState'
+        type: array
+    type: object
+  main.discordMemberRow:
+    properties:
+      avatar:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      username:
+        type: string
+    type: object
+  main.discordRoleRow:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  main.dungeonRecord:
+    properties:
+      completion_id:
+        type: integer
+      difficulty:
+        type: string
+      dungeon_id:
+        type: string
+      duration_ms:
+        type: integer
+      players_num:
+        type: integer
+    type: object
+  main.environmentSummary:
+    properties:
+      active_server_count:
+        type: integer
+      arch:
+        type: string
+      auth_enabled:
+        type: boolean
+      control_plane:
+        type: string
+      go_version:
+        type: string
+      market_bot_enabled:
+        type: boolean
+      os:
+        type: string
+      version:
+        type: string
+    type: object
+  main.factionRep:
+    properties:
+      actor_id:
+        type: integer
+      faction_id:
+        type: integer
+      faction_name:
+        type: string
+      reputation:
+        type: integer
+      scrips:
+        type: integer
+    type: object
+  main.factionStat:
+    properties:
+      avg_level:
+        type: number
+      faction:
+        type: string
+      players:
+        type: integer
+      scrip:
+        type: integer
+      solaris:
+        type: integer
+    type: object
+  main.factionTrendPoint:
+    properties:
+      day:
+        type: string
+      values:
+        additionalProperties:
+          format: float64
+          type: number
+        type: object
+    type: object
+  main.factionTrends:
+    properties:
+      factions:
+        items:
+          type: string
+        type: array
+      metric:
+        type: string
+      points:
+        items:
+          $ref: '#/definitions/main.factionTrendPoint'
+        type: array
+    type: object
+  main.gameEvent:
+    properties:
+      actor_id:
+        type: integer
+      custom_data:
+        type: string
+      event_type:
+        type: integer
+      map:
+        type: string
+      universe_time:
+        type: string
+      x:
+        type: number
+      "y":
+        type: number
+      z:
+        type: number
+    type: object
+  main.giveItemInput:
+    properties:
+      qty:
+        type: integer
+      quality:
+        type: integer
+      template:
+        type: string
+    type: object
+  main.giveItemsRequest:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/main.giveItemInput'
+        type: array
+      player_id:
+        type: integer
+    type: object
+  main.guildDetail:
+    properties:
+      description:
+        type: string
+      faction_id:
+        type: integer
+      faction_name:
+        type: string
+      guild_id:
+        type: integer
+      invites:
+        items:
+          $ref: '#/definitions/main.guildInvite'
+        type: array
+      member_count:
+        type: integer
+      members:
+        items:
+          $ref: '#/definitions/main.guildMember'
+        type: array
+      name:
+        type: string
+    type: object
+  main.guildInvite:
+    properties:
+      character_name:
+        type: string
+      invite_id:
+        type: integer
+      player_id:
+        type: integer
+      sender_name:
+        type: string
+      sender_player_id:
+        type: integer
+    type: object
+  main.guildMember:
+    properties:
+      character_name:
+        type: string
+      player_id:
+        type: integer
+      role_id:
+        type: integer
+    type: object
+  main.guildSummary:
+    properties:
+      description:
+        type: string
+      faction_id:
+        type: integer
+      faction_name:
+        type: string
+      guild_id:
+        type: integer
+      member_count:
+        type: integer
+      name:
+        type: string
+    type: object
+  main.intelAuditRow:
+    properties:
+      account_id:
+        type: integer
+      expected_intel:
+        type: integer
+      intel:
+        type: integer
+      level:
+        type: integer
+      name:
+        type: string
+      online:
+        type: boolean
+      pawn_id:
+        type: integer
+    type: object
+  main.itemInfo:
+    properties:
+      durability:
+        type: string
+      id:
+        type: integer
+      max_durability:
+        type: string
+      name:
+        type: string
+      quality:
+        type: integer
+      stack_size:
+        type: integer
+      template_id:
+        type: string
+    type: object
+  main.labeledCount:
+    properties:
+      count:
+        type: integer
+      label:
+        type: string
+    type: object
+  main.landsraadDecree:
+    properties:
+      disabled:
+        type: boolean
+      id:
+        type: integer
+      name:
+        type: string
+      weight:
+        type: number
+    type: object
+  main.landsraadOverview:
+    properties:
+      decrees:
+        items:
+          $ref: '#/definitions/main.landsraadDecree'
+        type: array
+      tasks:
+        items:
+          $ref: '#/definitions/main.landsraadTask'
+        type: array
+      term:
+        $ref: '#/definitions/main.landsraadTerm'
+    type: object
+  main.landsraadTask:
+    properties:
+      board_index:
+        type: integer
+      completed:
+        type: boolean
+      goal_amount:
+        type: integer
+      house:
+        type: string
+      id:
+        type: integer
+      sysselraad:
+        type: boolean
+      winning_faction:
+        type: string
+    type: object
+  main.landsraadTerm:
+    properties:
+      active_decree:
+        type: string
+      elected_decree:
+        type: string
+      end_time:
+        type: string
+      reigning_faction:
+        type: string
+      start_time:
+        type: string
+      term_id:
+        type: integer
+      test_term:
+        type: boolean
+      winning_faction:
+        type: string
+    type: object
+  main.logPod:
+    properties:
+      name:
+        type: string
+      namespace:
+        type: string
+    type: object
+  main.loginRequest:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  main.mapMarker:
+    properties:
+      class:
+        type: string
+      dimension_index:
+        type: integer
+      fls_id:
+        type: string
+      id:
+        type: integer
+      map:
+        type: string
+      name:
+        type: string
+      online_status:
+        type: string
+      partition_id:
+        type: integer
+      type:
+        description: '"player" | "vehicle" | "base"'
+        type: string
+      x:
+        type: number
+      "y":
+        type: number
+      z:
+        type: number
+    type: object
+  main.permissionsResponse:
+    properties:
+      capabilities:
+        items:
+          $ref: '#/definitions/main.capabilityInfo'
+        type: array
+      guild_roles:
+        items:
+          $ref: '#/definitions/main.discordRoleRow'
+        type: array
+      matrix:
+        additionalProperties:
+          items:
+            type: string
+          type: array
+        type: object
+      seed_defaults:
+        description: |-
+          SeedDefaults is the standard read-only baseline the "Reset" button in
+          the UI restores the Default row to. Sourced from defaultSeedCaps so the
+          UI never hardcodes it.
+        items:
+          type: string
+        type: array
+    type: object
+  main.permissionsUpdateRequest:
+    properties:
+      matrix:
+        additionalProperties:
+          items:
+            type: string
+          type: array
+        type: object
+    type: object
+  main.playerInfo:
+    properties:
+      account_id:
+        type: integer
+      class:
+        type: string
+      controller_id:
+        type: integer
+      discord_avatar:
+        type: string
+      discord_user_id:
+        type: string
+      faction_id:
+        type: integer
+      fls_id:
+        type: string
+      id:
+        type: integer
+      map:
+        type: string
+      name:
+        type: string
+      online_status:
+        type: string
+    type: object
+  main.restoreStepState:
+    properties:
+      key:
+        type: string
+      status:
+        type: string
+    type: object
+  main.serverHealth:
+    properties:
+      active:
+        type: boolean
+      control:
+        type: string
+      db_connected:
+        type: boolean
+      error:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      phase:
+        type: string
+      players_online:
+        type: integer
+      running:
+        type: boolean
+      uptime_seconds:
+        type: integer
+    type: object
+  main.serverSummary:
+    properties:
+      activity_trend:
+        items:
+          $ref: '#/definitions/main.activityPoint'
+        type: array
+      avg_char_level:
+        type: number
+      by_faction:
+        items:
+          $ref: '#/definitions/main.factionStat'
+        type: array
+      by_map:
+        items:
+          $ref: '#/definitions/main.labeledCount'
+        type: array
+      online_players:
+        type: integer
+      total_players:
+        type: integer
+      total_playtime_secs:
+        type: integer
+      total_scrip:
+        type: integer
+      total_solaris:
+        type: integer
+      trend_days:
+        type: integer
+    type: object
+  main.specTrack:
+    properties:
+      level:
+        type: number
+      player_id:
+        type: integer
+      track_type:
+        type: string
+      xp:
+        type: integer
+    type: object
+  main.teleportLocation:
+    properties:
+      name:
+        type: string
+      x:
+        type: number
+      "y":
+        type: number
+      z:
+        type: number
+    type: object
+  main.updateApplyRequest:
+    properties:
+      force:
+        type: boolean
+    type: object
+  main.updateApplyResponse:
+    properties:
+      message:
+        type: string
+      updated:
+        type: boolean
+      version:
+        type: string
+    type: object
+  main.updateCheckResponse:
+    properties:
+      current:
+        type: string
+      latest:
+        type: string
+      needs_update:
+        type: boolean
+      release_url:
+        type: string
+    type: object
+  main.vehicleRow:
+    properties:
+      chassis_durability:
+        type: number
+      class:
+        type: string
+      id:
+        type: integer
+      is_backup:
+        type: boolean
+      is_recovered:
+        type: boolean
+      map:
+        type: string
+      vehicle_name:
+        type: string
+    type: object
+  main.welcomeConfigResponse:
+    properties:
+      active_version:
+        type: string
+      active_versions:
+        items:
+          type: string
+        type: array
+      enabled:
+        type: boolean
+      motd_enabled:
+        type: boolean
+      motd_message:
+        type: string
+      motd_source_player:
+        type: string
+      packages:
+        items:
+          $ref: '#/definitions/main.welcomePackage'
+        type: array
+      region_chat_channel:
+        description: '"whisper" | "map"'
+        type: string
+      region_join_enabled:
+        type: boolean
+      region_join_template:
+        type: string
+      region_leave_enabled:
+        type: boolean
+      region_leave_template:
+        type: string
+      scan_interval_secs:
+        type: integer
+      welcome_message:
+        type: string
+      welcome_message_enabled:
+        type: boolean
+      welcome_whisper_source_player:
+        type: string
+    type: object
+  main.welcomeGrantRecord:
+    properties:
+      account_id:
+        type: integer
+      attempts:
+        type: integer
+      character_name:
+        type: string
+      fls_id:
+        type: string
+      granted_at:
+        type: string
+      last_error:
+        type: string
+      package_version:
+        type: string
+      status:
+        description: '"granted" | "failed"'
+        type: string
+      updated_at:
+        type: string
+    type: object
+  main.welcomePackage:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/main.welcomePackageItem'
+        type: array
+      version:
+        type: string
+    type: object
+  main.welcomePackageItem:
+    properties:
+      qty:
+        type: integer
+      quality:
+        type: integer
+      template:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: |-
+    Admin panel API for a Dune Awakening private server.
+    When auth_enabled is set, all /api/v1 endpoints (except /api/v1/auth/*) require the session cookie issued by /api/v1/auth/login or the Discord OAuth flow.
+  title: dune-admin API
+  version: "1.0"
+paths:
+  /api/v1/auth/discord/callback:
+    get:
+      responses:
+        "302":
+          description: Found
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "502":
+          description: Bad Gateway
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Discord OAuth2 callback
+      tags:
+      - auth
+  /api/v1/auth/discord/login:
+    get:
+      responses:
+        "302":
+          description: Found
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Start Discord OAuth2 login
+      tags:
+      - auth
+  /api/v1/auth/guest:
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Start a read-only guest session
+      tags:
+      - auth
+  /api/v1/auth/login:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Login credentials
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/main.loginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "429":
+          description: Too Many Requests
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Local username/password login
+      tags:
+      - auth
+  /api/v1/auth/logout:
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Log out (clear session cookie)
+      tags:
+      - auth
+  /api/v1/auth/permissions:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.permissionsResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get the role→capability permissions matrix (owner only)
+      tags:
+      - auth
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: New role→capability matrix
+        in: body
+        name: matrix
+        required: true
+        schema:
+          $ref: '#/definitions/main.permissionsUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Replace the permissions matrix (owner only)
+      tags:
+      - auth
+  /api/v1/auth/status:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.authStatusResponse'
+      summary: 'Auth status: enabled flag, login methods, current session'
+      tags:
+      - auth
+  /api/v1/auth/users:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/main.authUserRecord'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List local dashboard users (owner / auth:manage)
+      tags:
+      - auth
+  /api/v1/auth/users/{username}:
+    delete:
+      parameters:
+      - description: Username
+        in: path
+        name: username
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete a local dashboard user (owner / auth:manage)
+      tags:
+      - auth
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Username
+        in: path
+        name: username
+        required: true
+        type: string
+      - description: User settings
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/main.authUserUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create or update a local dashboard user (owner / auth:manage)
+      tags:
+      - auth
+  /api/v1/bases:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List all player bases
+      tags:
+      - bases
+  /api/v1/bases/{id}/export:
+    get:
+      parameters:
+      - description: Base (building) ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: Base blueprint JSON file
+          schema:
+            type: file
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Export a base as a downloadable blueprint JSON file
+      tags:
+      - bases
+  /api/v1/battlegroup/backup-files:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/main.backupFile'
+            type: array
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List available database backup files in the backup directory
+      tags:
+      - battlegroup
+  /api/v1/battlegroup/backup-files/download:
+    get:
+      parameters:
+      - description: Backup filename (must end in .backup)
+        in: query
+        name: file
+        required: true
+        type: string
+      produces:
+      - application/zip
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Download a backup file (and its YAML metadata) as a zip archive
+      tags:
+      - battlegroup
+  /api/v1/battlegroup/backup-files/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: Backup file (.backup or .zip)
+        in: formData
+        name: backup
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Upload a backup file (.backup or .zip) to the backup directory
+      tags:
+      - battlegroup
+  /api/v1/battlegroup/exec:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 'Command: start, stop, restart, update, or backup'
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Execute a battlegroup lifecycle command via the control plane
+      tags:
+      - battlegroup
+  /api/v1/battlegroup/pods:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List battlegroup pods/processes and their namespace
+      tags:
+      - battlegroup
+  /api/v1/battlegroup/restart-partition:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 'partition: partition index to restart'
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "501":
+          description: Not Implemented
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Restart a single map/partition without cycling the whole Battlegroup
+      tags:
+      - battlegroup
+  /api/v1/battlegroup/restore:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Backup filename (must end in .backup)
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Restore the database from a named backup file via the control plane
+      tags:
+      - battlegroup
+  /api/v1/battlegroup/status:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get battlegroup and server status from the control plane
+      tags:
+      - battlegroup
+  /api/v1/battlepass/claims/reset:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        #293 cleanup. mode "demote": earned claims become baseline
+        (never grantable, block re-earning; granted rows kept as
+        history). mode "purge": delete claims AND seen-markers together
+        so everything re-baselines on the next scan. Both modes also
+        drop pending/exhausted auto-grant ledger rows. account_id 0 or
+        omitted = every account on this server.
+      parameters:
+      - description: mode (demote|purge), account_id?
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Reset battlepass claims after an incident
+      tags:
+      - battlepass
+  /api/v1/blueprints:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List all building blueprints
+      tags:
+      - blueprints
+  /api/v1/blueprints/{id}/export:
+    get:
+      parameters:
+      - description: Blueprint ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: Blueprint JSON file
+          schema:
+            type: file
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Export a blueprint as a downloadable JSON file
+      tags:
+      - blueprints
+  /api/v1/blueprints/import:
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: Blueprint JSON file
+        in: formData
+        name: blueprint
+        required: true
+        type: file
+      - description: Player pawn ID to receive the blueprint
+        in: formData
+        name: player_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Import a blueprint JSON file into a player's inventory
+      tags:
+      - blueprints
+  /api/v1/broadcast:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Localized texts and optional duration in seconds
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Send server-wide broadcast message via RabbitMQ
+      tags:
+      - broadcast
+  /api/v1/broadcast/shutdown:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Shutdown type, delay, frequency, duration, and cancel flag
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Send shutdown broadcast command via RabbitMQ
+      tags:
+      - broadcast
+  /api/v1/character-backups/{id}:
+    delete:
+      parameters:
+      - description: Backup ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete a character backup (record + file)
+      tags:
+      - players
+  /api/v1/character-backups/{id}/download:
+    get:
+      parameters:
+      - description: Backup ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: character-backup-{id}.json attachment
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Download a character backup's raw transfer JSON
+      tags:
+      - players
+  /api/v1/character-backups/{id}/restore:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Backup ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: confirm
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Restore a character from a backup (DESTRUCTIVE — full replace)
+      tags:
+      - players
+  /api/v1/chat/whisper:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Recipient account id and message
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Send a whisper to a player from the GM/Server persona
+      tags:
+      - chat
+  /api/v1/config:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.appConfig'
+      summary: Get current runtime configuration (secrets masked)
+      tags:
+      - config
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Updated configuration
+        in: body
+        name: config
+        required: true
+        schema:
+          $ref: '#/definitions/main.appConfig'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Save configuration and reconnect
+      tags:
+      - config
+  /api/v1/contracts:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: object
+            type: array
+      summary: List the catalog of known contracts
+      tags:
+      - contracts
+  /api/v1/database/describe:
+    get:
+      parameters:
+      - description: Table name
+        in: query
+        name: table
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Describe columns of a table
+      tags:
+      - database
+  /api/v1/database/sample:
+    get:
+      parameters:
+      - description: Table name
+        in: query
+        name: table
+        required: true
+        type: string
+      - description: Number of rows to return (default 20, max 500)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Return sample rows from a table
+      tags:
+      - database
+  /api/v1/database/search:
+    get:
+      parameters:
+      - description: Search term
+        in: query
+        name: term
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Search for a term across all table columns
+      tags:
+      - database
+  /api/v1/database/sql:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: SQL query
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Execute a read-only SQL query (SELECT/EXPLAIN/SHOW only)
+      tags:
+      - database
+  /api/v1/database/tables:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List all tables in the dune schema
+      tags:
+      - database
+  /api/v1/db-backups:
+    delete:
+      parameters:
+      - description: backup filename
+        in: query
+        name: file
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      summary: Delete a database backup
+      tags:
+      - db-backups
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: List database backups
+      tags:
+      - db-backups
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "501":
+          description: Not Implemented
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Take a database backup now
+      tags:
+      - db-backups
+  /api/v1/db-backups/download:
+    get:
+      parameters:
+      - description: backup filename
+        in: query
+        name: file
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      responses: {}
+      summary: Download a database backup
+      tags:
+      - db-backups
+  /api/v1/db-backups/restore:
+    post:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Start a database restore job (DESTRUCTIVE — stops running game servers
+        first where supported)
+      tags:
+      - db-backups
+  /api/v1/db-backups/restore/status:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.dbRestoreStatus'
+      summary: Poll the current restore job's progress for this server
+      tags:
+      - db-backups
+  /api/v1/diagnostics/bundle:
+    get:
+      produces:
+      - application/zip
+      responses: {}
+      summary: Download a redacted diagnostics bundle (zip)
+      tags:
+      - diagnostics
+  /api/v1/diagnostics/environment:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.environmentSummary'
+      summary: dune-admin environment summary
+      tags:
+      - diagnostics
+  /api/v1/diagnostics/logs/stream:
+    get:
+      produces:
+      - text/plain
+      responses: {}
+      summary: Stream dune-admin's own logs (raw) via WebSocket
+      tags:
+      - diagnostics
+  /api/v1/diagnostics/report:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Build a redacted GitHub issue title and body
+      tags:
+      - diagnostics
+  /api/v1/director-config:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "501":
+          description: Not Implemented
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Read the Battlegroup Director config (AMP only)
+      tags:
+      - director
+    put:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "501":
+          description: Not Implemented
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update the Battlegroup Director config (AMP only)
+      tags:
+      - director
+  /api/v1/discord/members/search:
+    get:
+      parameters:
+      - description: Name prefix to search
+        in: query
+        name: q
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/main.discordMemberRow'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Search Discord guild members by name prefix
+      tags:
+      - discord
+  /api/v1/guilds:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/main.guildSummary'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List all guilds with member count + faction name
+      tags:
+      - guilds
+  /api/v1/guilds/{id}:
+    get:
+      parameters:
+      - description: Guild ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.guildDetail'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get one guild with its members and pending invites
+      tags:
+      - guilds
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Guild ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.guildDetail'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Edit a guild's name and/or description
+      tags:
+      - guilds
+  /api/v1/guilds/{id}/members/{pid}/role:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Guild ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Member player (actor) ID
+        in: path
+        name: pid
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Set a guild member's role (50 = member, 100 = admin)
+      tags:
+      - guilds
+  /api/v1/landsraad:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.landsraadOverview'
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Landsraad overview — latest term, decree catalogue, and task board
+      tags:
+      - landsraad
+  /api/v1/locations:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: name
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/main.teleportLocation'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete a named location
+      tags:
+      - locations
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/main.teleportLocation'
+            type: array
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List all saved teleport/spawn locations
+      tags:
+      - locations
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: name, x, y, z
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/main.teleportLocation'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Add or update a named teleport/spawn location
+      tags:
+      - locations
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: old_name, new_name
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/main.teleportLocation'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Rename an existing location
+      tags:
+      - locations
+  /api/v1/logs/cheats:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/main.cheatEntry'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Fetch the cheat detection log
+      tags:
+      - logs
+  /api/v1/logs/pods:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/main.logPod'
+            type: array
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List available log sources
+      tags:
+      - logs
+  /api/v1/logs/stream:
+    get:
+      parameters:
+      - description: Namespace or log source
+        in: query
+        name: ns
+        required: true
+        type: string
+      - description: Pod or log file name
+        in: query
+        name: pod
+        required: true
+        type: string
+      produces:
+      - text/plain
+      responses:
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Stream log via WebSocket
+      tags:
+      - logs
+  /api/v1/map/dimensions:
+    get:
+      parameters:
+      - description: Map key (HaggaBasin | DeepDesert)
+        in: query
+        name: map
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: integer
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Live Map available dimensions for a map
+      tags:
+      - map
+  /api/v1/map/markers:
+    get:
+      parameters:
+      - description: Map key (HaggaBasin | DeepDesert)
+        in: query
+        name: map
+        required: true
+        type: string
+      - description: Dimension index to filter to (omit for all dimensions)
+        in: query
+        name: dimension
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/main.mapMarker'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Live Map markers for a map
+      tags:
+      - map
+  /api/v1/market-bot/cleanup:
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              format: int64
+              type: integer
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Trigger market bot listing cleanup
+      tags:
+      - market-bot
+  /api/v1/market-bot/config:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Configuration patch
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update market bot configuration
+      tags:
+      - market-bot
+  /api/v1/market-bot/exec:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 'Command: start, stop, or restart'
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Execute a lifecycle command on the market bot (start/stop/restart)
+      tags:
+      - market-bot
+  /api/v1/market-bot/logs:
+    get:
+      produces:
+      - text/plain
+      responses:
+        "101":
+          description: Switching Protocols
+          schema:
+            type: string
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Stream market bot log output via WebSocket
+      tags:
+      - market-bot
+  /api/v1/market-bot/logs-ready:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Check whether market bot log streaming is available
+      tags:
+      - market-bot
+  /api/v1/market-bot/status:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get market bot running status and mode
+      tags:
+      - market-bot
+  /api/v1/market/catalog:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+      summary: List all known item templates with display names
+      tags:
+      - market
+  /api/v1/market/categories:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: string
+            type: array
+      summary: List distinct item categories from the item catalog
+      tags:
+      - market
+  /api/v1/market/items:
+    get:
+      parameters:
+      - description: Filter by display name or template ID
+        in: query
+        name: search
+        type: string
+      - description: Filter by category prefix
+        in: query
+        name: category
+        type: string
+      - description: Filter by item tier
+        in: query
+        name: tier
+        type: integer
+      - description: Filter by rarity
+        in: query
+        name: rarity
+        type: string
+      - description: Filter by owner type (bot|player|all)
+        in: query
+        name: owner
+        type: string
+      - description: Page number (0-based)
+        in: query
+        name: page
+        type: integer
+      - description: Page size (default 100, max 500)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List market items aggregated by template ID
+      tags:
+      - market
+  /api/v1/market/listings:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List individual active market listings
+      tags:
+      - market
+  /api/v1/market/sales:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List recent fulfilled market sales
+      tags:
+      - market
+  /api/v1/market/stats:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Return aggregate market statistics
+      tags:
+      - market
+  /api/v1/notify:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Routing key, keywords, and notification content
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Publish an in-game notification via mq-game RabbitMQ exchange
+      tags:
+      - notifications
+  /api/v1/players:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/main.playerInfo'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List all players
+      tags:
+      - players
+  /api/v1/players/{id}/backup:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Account ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: character_name, reason
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a full character backup via the native transfer export
+      tags:
+      - players
+  /api/v1/players/{id}/backups:
+    get:
+      parameters:
+      - description: Account ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/main.characterBackup'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List a player's character backups
+      tags:
+      - players
+  /api/v1/players/{id}/char-xp:
+    get:
+      parameters:
+      - description: Player ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get character XP and level for a player
+      tags:
+      - players
+  /api/v1/players/{id}/dungeons:
+    get:
+      parameters:
+      - description: Player ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/main.dungeonRecord'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get dungeon run records for a player
+      tags:
+      - players
+  /api/v1/players/{id}/events:
+    get:
+      parameters:
+      - description: Player ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/main.gameEvent'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get event log entries for a player
+      tags:
+      - players
+  /api/v1/players/{id}/intel:
+    get:
+      description: |-
+        Returns current intel, the character's level, the expected
+        cumulative intel for that level, and the spendable cap.
+      parameters:
+      - description: Player (pawn) ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get a player's current intel points
+      tags:
+      - players
+  /api/v1/players/{id}/inventory:
+    get:
+      parameters:
+      - description: Player ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/main.itemInfo'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get inventory for a player
+      tags:
+      - players
+  /api/v1/players/{id}/journey:
+    get:
+      parameters:
+      - description: Account ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: object
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get journey node state for an account
+      tags:
+      - players
+  /api/v1/players/{id}/keystones:
+    get:
+      parameters:
+      - description: Player ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: object
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get keystones owned by a player
+      tags:
+      - players
+  /api/v1/players/{id}/player-ids:
+    get:
+      parameters:
+      - description: Actor (pawn) ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Resolve actor ID to both ID forms and render a sample RMQ envelope
+      tags:
+      - players
+  /api/v1/players/{id}/position:
+    get:
+      parameters:
+      - description: Player ID (actor ID)
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get world position of a player's character
+      tags:
+      - players
+  /api/v1/players/{id}/specs:
+    get:
+      parameters:
+      - description: Player ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/main.specTrack'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get specialization tracks for a specific player
+      tags:
+      - players
+  /api/v1/players/{id}/tags:
+    get:
+      parameters:
+      - description: Account ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: string
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get tags assigned to a player account
+      tags:
+      - players
+  /api/v1/players/{id}/vehicles:
+    get:
+      parameters:
+      - description: Player ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/main.vehicleRow'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get vehicles owned by a player
+      tags:
+      - players
+  /api/v1/players/award-char-xp:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: fls_id (optional), player_id, amount
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Award character XP to a player (live RMQ or DB fallback)
+      tags:
+      - players
+  /api/v1/players/award-intel:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: player_id, amount
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Award intel points to a player
+      tags:
+      - players
+  /api/v1/players/award-xp:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: player_id, track_type, delta
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Award XP on a specialization track for a player
+      tags:
+      - players
+  /api/v1/players/cheat-script:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Player FLS ID and script name
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Send cheat script command via RabbitMQ
+      tags:
+      - players
+  /api/v1/players/clean-inventory:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Player FLS ID
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Send clean-inventory command via RabbitMQ
+      tags:
+      - players
+  /api/v1/players/contract/complete:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: account_id, contract_id
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Complete a single contract for an account
+      tags:
+      - contracts
+  /api/v1/players/contracts/complete:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: account_id, contract_ids ([]string)
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Complete multiple contracts for an account
+      tags:
+      - contracts
+  /api/v1/players/contracts/reverse:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: account_id, contract_ids ([]string)
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Reverse (undo) multiple completed contracts for an account
+      tags:
+      - contracts
+  /api/v1/players/currency:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/main.currencyRow'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List currency balances for all players
+      tags:
+      - players
+  /api/v1/players/delete:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Deletes a character via dune.delete_account: removes player
+        actors, respawn beacons, and the account row, writes an audit
+        log entry, and notifies the live server. Irreversible.
+      parameters:
+      - description: Account ID and reason
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Permanently delete a character
+      tags:
+      - players
+  /api/v1/players/delete-account:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: account_id, reason
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete a player account and all associated data
+      tags:
+      - players
+  /api/v1/players/delete-tutorials:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: player_id
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete all tutorial records for a player
+      tags:
+      - players
+  /api/v1/players/dismiss-returning-player-award:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: account_id
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Dismiss the returning-player award for an account
+      tags:
+      - players
+  /api/v1/players/faction-trends:
+    get:
+      parameters:
+      - description: solaris (default) | level
+        in: query
+        name: metric
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.factionTrends'
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Faction-growth time series (Solaris or avg level per faction)
+      tags:
+      - players
+  /api/v1/players/factions:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/main.factionRep'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List faction reputation for all players
+      tags:
+      - players
+  /api/v1/players/fill-water:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Player FLS ID and optional water amount
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "422":
+          description: Player must be online
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Send fill-water command via RabbitMQ (player must be online)
+      tags:
+      - players
+  /api/v1/players/give-currency:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: player_id, amount
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Give currency to a player
+      tags:
+      - players
+  /api/v1/players/give-faction-rep:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: actor_id, faction_id, delta
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Adjust faction reputation for a player
+      tags:
+      - players
+  /api/v1/players/give-item:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: player_id, template, qty, quality
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Give a single item to a player
+      tags:
+      - players
+  /api/v1/players/give-item-live:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Actor ID, item template, quantity, and durability
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Send give-item command via RabbitMQ to an online player
+      tags:
+      - players
+  /api/v1/players/give-items:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: player_id and items list
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/main.giveItemsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Give multiple items to a player in a single request
+      tags:
+      - players
+  /api/v1/players/give-scrip:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: actor_id, delta
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Adjust Landsraad scrip for a player
+      tags:
+      - players
+  /api/v1/players/grant-all-keystones:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: player_id
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Grant all keystones to a player
+      tags:
+      - players
+  /api/v1/players/grant-job-skills:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: account_id, job
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Grant job skills for a specific job to an account
+      tags:
+      - players
+  /api/v1/players/grant-live:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: controller_id, template, amount
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Grant an item to a player via FLS/PlayFab live path
+      tags:
+      - players
+  /api/v1/players/grant-max-spec:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: player_id, track_type
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Grant max level on a specialization track for a player
+      tags:
+      - players
+  /api/v1/players/intel-audit:
+    get:
+      description: |-
+        Cleanup audit for the #293 battlepass mass-grant: every row is a
+        character holding more intel than its level should have earned.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/main.intelAuditRow'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List characters whose intel exceeds the expected value for their level
+      tags:
+      - players
+  /api/v1/players/item/{id}:
+    delete:
+      parameters:
+      - description: Item ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete a specific inventory item by item ID
+      tags:
+      - players
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Item ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: stack_size, quality
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Edit an existing inventory item's stack size and quality grade
+      tags:
+      - players
+  /api/v1/players/journey/complete:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: account_id, node_id
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Mark a journey node as complete for an account
+      tags:
+      - players
+  /api/v1/players/journey/reset:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: account_id, node_id
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Reset (incomplete) a journey node for an account
+      tags:
+      - players
+  /api/v1/players/journey/wipe:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: account_id
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Wipe all journey nodes for an account
+      tags:
+      - players
+  /api/v1/players/kick:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Player FLS ID
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Send kick command via RabbitMQ
+      tags:
+      - players
+  /api/v1/players/online:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: object
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get online state for all players
+      tags:
+      - players
+  /api/v1/players/partitions:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/main.teleportLocation'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List available teleport partition locations
+      tags:
+      - players
+  /api/v1/players/progression-reverse:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: player_id, faction, preset
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Reverse a previously unlocked progression preset for a player
+      tags:
+      - progression
+  /api/v1/players/progression-unlock:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: player_id, faction, preset
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Unlock a progression preset for a player
+      tags:
+      - progression
+  /api/v1/players/rename:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: account_id, name
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Rename a player's character
+      tags:
+      - players
+  /api/v1/players/repair-gear:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: player_id
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Repair all equipped gear for a player
+      tags:
+      - players
+  /api/v1/players/repair-item:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: id (item ID)
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Repair a single inventory item to full durability
+      tags:
+      - players
+  /api/v1/players/reset-all-keystones:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: player_id
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Reset all keystones for a player
+      tags:
+      - players
+  /api/v1/players/reset-job-skills:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: account_id, job
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Reset job skills for an account
+      tags:
+      - players
+  /api/v1/players/reset-progression:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Player FLS ID
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Send reset-progression command via RabbitMQ
+      tags:
+      - players
+  /api/v1/players/reset-spec:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: player_id, track_type
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Reset a specialization track for a player
+      tags:
+      - players
+  /api/v1/players/returning-player-award:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: account_id
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Grant the returning-player award to an account
+      tags:
+      - players
+  /api/v1/players/set-faction-tier:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: actor_id, faction_id, tier
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Set a player's tier within a faction
+      tags:
+      - players
+  /api/v1/players/set-intel:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Clamped to [0, cap]. May reduce the balance — the cleanup path
+        for over-granted intel. The player must be offline.
+      parameters:
+      - description: player_id, amount
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Set a player's intel points to an explicit value
+      tags:
+      - players
+  /api/v1/players/set-skill-module:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Player FLS ID, module name, and level
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Send set-skill-module command via RabbitMQ
+      tags:
+      - players
+  /api/v1/players/set-skill-points:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Player FLS ID and skill points value
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Send set-skill-points command via RabbitMQ
+      tags:
+      - players
+  /api/v1/players/set-starter-class:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: account_id, job
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Set the starter class (job) for an account
+      tags:
+      - players
+  /api/v1/players/specs:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/main.specTrack'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List specialization tracks for all players
+      tags:
+      - players
+  /api/v1/players/summary:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.serverSummary'
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Server-wide player summary dashboard
+      tags:
+      - players
+  /api/v1/players/teleport:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: fls_id, partition_label
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Teleport a player to a named partition location
+      tags:
+      - players
+  /api/v1/players/teleport-coords:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: fls_id, x, y, z, partition_id (optional)
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Teleport a player to arbitrary XYZ coordinates
+      tags:
+      - players
+  /api/v1/players/teleport-to-player:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: source_fls_id, target_id (actor ID)
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Teleport a player to another player's current position
+      tags:
+      - players
+  /api/v1/players/templates:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: object
+            type: array
+      summary: List all known item templates
+      tags:
+      - players
+  /api/v1/players/update-tags:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: account_id, add ([]string), remove ([]string)
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Add or remove tags on a player account
+      tags:
+      - players
+  /api/v1/players/wipe-codex:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: account_id
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Wipe the codex for an account
+      tags:
+      - players
+  /api/v1/reconnect:
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Tear down and re-establish all backend connections
+      tags:
+      - status
+  /api/v1/scheduled-backups:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get the scheduled-backup config + next backup time
+      tags:
+      - scheduled-backups
+    put:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update the scheduled-backup config
+      tags:
+      - scheduled-backups
+  /api/v1/scheduled-restarts:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get the scheduled-restart config + next restart time
+      tags:
+      - scheduled-restarts
+    put:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update the scheduled-restart config
+      tags:
+      - scheduled-restarts
+  /api/v1/scheduled-restarts/skip-next:
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Skip the next scheduled restart (without disabling the schedule)
+      tags:
+      - scheduled-restarts
+  /api/v1/server-settings:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get server INI settings and raw sections
+      tags:
+      - server-settings
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: List of setting updates
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Apply one or more server setting changes
+      tags:
+      - server-settings
+  /api/v1/server-settings/raw:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Section name and raw INI lines
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Replace a raw INI section (array lines included)
+      tags:
+      - server-settings
+  /api/v1/servers/discover:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Connection settings to probe
+        in: body
+        name: config
+        required: true
+        schema:
+          $ref: '#/definitions/main.ServerConfig'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "502":
+          description: Bad Gateway
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Discover connection values for a new server (no persistence)
+      tags:
+      - servers
+  /api/v1/servers/health:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/main.serverHealth'
+            type: array
+      summary: Per-server health summary for the dashboard
+      tags:
+      - servers
+  /api/v1/status:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Return connection state and build info
+      tags:
+      - status
+  /api/v1/storage:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List all storage containers
+      tags:
+      - storage
+  /api/v1/storage/{id}/give-item:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Container ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Item to give
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Give a single item to a storage container
+      tags:
+      - storage
+  /api/v1/storage/{id}/give-items:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Container ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Items to give
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Give multiple items to a storage container
+      tags:
+      - storage
+  /api/v1/storage/{id}/items:
+    get:
+      parameters:
+      - description: Container ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get items inside a storage container
+      tags:
+      - storage
+  /api/v1/storage/{id}/owner-debug:
+    get:
+      parameters:
+      - description: Container ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Debug ownership chain for a storage container
+      tags:
+      - storage
+  /api/v1/update/apply:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Set force=true to reinstall even when up to date
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/main.updateApplyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.updateApplyResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "502":
+          description: Bad Gateway
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Download and apply the latest release, then restart
+      tags:
+      - update
+  /api/v1/update/check:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.updateCheckResponse'
+        "502":
+          description: Bad Gateway
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Check for a newer release on GitHub
+      tags:
+      - update
+  /api/v1/vehicles/spawn:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: FLS ID, class name, coordinates, rotation, template, persistence,
+          and faction
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Send vehicle spawn command via RabbitMQ
+      tags:
+      - vehicles
+  /api/v1/web-interfaces:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: List configured web interfaces
+      tags:
+      - web-interfaces
+    put:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Replace the configured web interfaces
+      tags:
+      - web-interfaces
+  /api/v1/welcome-package/config:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.welcomeConfigResponse'
+      summary: Get welcome-package config
+      tags:
+      - welcome-package
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: config
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/main.welcomeConfigResponse'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.welcomeConfigResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update welcome-package config (applies live + persists)
+      tags:
+      - welcome-package
+  /api/v1/welcome-package/grants:
+    get:
+      parameters:
+      - description: max rows (default 100)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/main.welcomeGrantRecord'
+            type: array
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List welcome-package grant ledger rows
+      tags:
+      - welcome-package
+  /api/v1/welcome-package/override:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: account_id, package_version
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Manually grant a package to a chosen player, bypassing the already-granted
+        guard
+      tags:
+      - welcome-package
+  /api/v1/welcome-package/retry:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: fls_id, package_version, account_id
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Retry a failed welcome-package grant (clears the ledger row)
+      tags:
+      - welcome-package
+  /api/v1/welcome-package/revoke:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: fls_id, package_version, account_id
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Revoke a welcome-package grant (clears the ledger row so the same package
+        can be granted again)
+      tags:
+      - welcome-package
+  /api/v1/welcome-package/run:
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Run a welcome-package scan now (one-off, regardless of enabled)
+      tags:
+      - welcome-package
+securityDefinitions:
+  CookieAuth:
+    in: cookie
+    name: dune_admin_session
+    type: apiKey
+swagger: "2.0"

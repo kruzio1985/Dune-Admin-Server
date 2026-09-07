@@ -1,0 +1,52 @@
+# Dune Admin Manager - Python dependencies
+# Backend: FastAPI + uvicorn
+
+# Web framework
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+websockets>=13.0
+
+# Database
+psycopg2-binary>=2.9.10
+sqlalchemy>=2.0.36
+aiosqlite>=0.20.0
+
+# SSH
+asyncssh>=2.18.0
+paramiko>=3.5.0
+
+# Configuration
+pyyaml>=6.0.2
+python-dotenv>=1.0.1
+
+# Authentication
+bcrypt>=4.2.0
+pyjwt>=2.9.0
+python-multipart>=0.0.18
+
+# HTTP
+httpx>=0.28.0
+aiohttp>=3.11.0
+
+# Scheduling
+apscheduler>=3.10.4
+
+# Windows-specific (Hyper-V)
+pywin32>=308; sys_platform == 'win32'
+
+# Utilities
+pydantic>=2.10.0
+rich>=13.9.0
+click>=8.1.7
+
+# Testing
+pytest>=8.3.0
+pytest-asyncio>=0.24.0
+httpx>=0.28.0
+
+# RabbitMQ
+aio-pika>=9.4.0
+pika>=1.3.2
+
+# Kubernetes (opcjonalnie)
+kubernetes-asyncio>=32.0.0
