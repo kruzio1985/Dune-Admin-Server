@@ -1,0 +1,17 @@
+hyperv:
+  memory_gb: 20
+  server_path: D:\SteamLibrary\steamapps\common\Dune Awakening Self-Hosted Server
+  vm_name: dune-awakening
+listen_addr: 0.0.0.0
+listen_port: 8080
+logging:
+  level: warning
+provider: hyperv
+server_name: Dune Server
+server_token: ''
+ssh:
+  host: 192.168.1.100
+  key_path: ''
+  password: dune
+  port: 22
+  user: dune

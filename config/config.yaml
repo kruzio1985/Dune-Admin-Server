@@ -1,0 +1,50 @@
+provider: hyperv
+listen_addr: 0.0.0.0
+listen_port: 8080
+hyperv:
+  vm_name: dune-awakening
+  server_path: D:\SteamLibrary\steamapps\common\Dune Awakening Self-Hosted Server
+  memory_gb: 20
+ssh:
+  host: 192.168.1.100
+  port: 22
+  user: dune
+  password: dune
+  key_path: ''
+  mode: library
+database:
+  host: 127.0.0.1
+  port: 15432
+  user: dune
+  password: ''
+  database: dune
+  schema: dune
+rabbitmq:
+  game_addr: ''
+  admin_addr: ''
+backup_dir: ./backups
+auto_backup_enabled: false
+auto_backup_interval_hours: 6
+max_backups: 10
+auth:
+  enabled: false
+  local_enabled: true
+  local_username: admin
+  local_password_hash: ''
+  discord_enabled: false
+  session_ttl_hours: 24
+  guest_enabled: false
+market_bot:
+  enabled: false
+welcome_package:
+  enabled: false
+motd:
+  enabled: false
+scheduler:
+  enabled: false
+  daily_restart_time: 04:00
+  timezone: Europe/Warsaw
+logging:
+  level: INFO
+  file: ./logs/dune-admin.log
+  audit_log: ./logs/audit.log
