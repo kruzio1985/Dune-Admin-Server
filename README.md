@@ -221,6 +221,6 @@ See `watchdog.ps1` — checks if the panel is running and starts it if not.
 
 ## 📜 License / Licencja
 
-This project is licensed under the **MIT** license. See [LICENSE](LICENSE).
+This project is licensed under the **PolyForm Noncommercial License 1.0.0** — free for personal, non-commercial use. Commercial use and selling are not permitted. See [LICENSE](LICENSE).
 
-Ten projekt jest udostępniony na licencji **MIT**. Zobacz [LICENSE](LICENSE).
+Ten projekt jest udostępniony na licencji **PolyForm Noncommercial License 1.0.0** — dozwolony jest wyłącznie prywatny, niekomercyjny użytek. Użycie komercyjne i sprzedaż kodu są zabronione. Zobacz [LICENSE](LICENSE).
